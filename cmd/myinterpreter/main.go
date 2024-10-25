@@ -27,8 +27,16 @@ func main() {
 	}
 	
 	var fileString = string(fileContents)
-	var tokens = Tokenize(fileString)
+	var tokens, tokenizeErrors = tokenize(fileString)
+	if len(tokenizeErrors) > 0 {
+		for _, err := range tokenizeErrors {
+			fmt.Fprintln(os.Stderr, err)
+		}
+	}
 	for _, token := range tokens {
 		fmt.Println(token)
+	}
+	if len(tokenizeErrors) > 0 {
+		os.Exit(65)
 	}
 }

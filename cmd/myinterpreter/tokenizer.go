@@ -1,8 +1,8 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"os"
 )
 
 // MARK: - Token types
@@ -59,9 +59,10 @@ func (token Token) String() string {
 }
 
 // MARK: - Tokenizer function
-func Tokenize(input string) []Token {
+func tokenize(input string) ([]Token, []error) {
 	var line uint64 = 1
 	var tokens []Token
+	var errs []error
 	for _, character := range input {
 		switch character {
 		case '(':
@@ -87,9 +88,10 @@ func Tokenize(input string) []Token {
 		case '\n':
 			line++
 		default:
-			fmt.Fprintf(os.Stderr, "[line %v] Error: Unexpected character: %v\n", line, string(character))
+			var message = fmt.Sprintf("[line %v] Error: Unexpected character: %v", line, string(character))
+			errs = append(errs, errors.New(message))
 		}
 	}
 	tokens = append(tokens, Token{Type: EOF, Lexeme: "", Literal: "null"})
-	return tokens
+	return tokens, errs
 }
