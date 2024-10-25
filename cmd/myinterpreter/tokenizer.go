@@ -7,6 +7,12 @@ const (
 	RIGHT_PAREN
 	LEFT_BRACE
 	RIGHT_BRACE
+	COMMA
+	DOT
+	MINUS
+	PLUS
+	SEMICOLON
+	STAR
 	EOF
 )
 func (tokenType TokenType) String() string {
@@ -19,6 +25,18 @@ func (tokenType TokenType) String() string {
 		return "LEFT_BRACE"
 	case RIGHT_BRACE:
 		return "RIGHT_BRACE"
+	case COMMA:
+		return "COMMA"
+	case DOT:
+		return "DOT"
+	case MINUS:
+		return "MINUS"
+	case PLUS:
+		return "PLUS"
+	case SEMICOLON:
+		return "SEMICOLON"
+	case STAR:
+		return "STAR"
 	case EOF:
 		return "EOF"
 	}
@@ -48,6 +66,18 @@ func Tokenize(input string) []Token {
 			tokens = append(tokens, Token{Type: LEFT_BRACE, Lexeme: string(character), Literal: "null"})
 		case '}':
 			tokens = append(tokens, Token{Type: RIGHT_BRACE, Lexeme: string(character), Literal: "null"})
+		case ',':
+			tokens = append(tokens, Token{Type: COMMA, Lexeme: string(character), Literal: "null"})
+		case '.':
+			tokens = append(tokens, Token{Type: DOT, Lexeme: string(character), Literal: "null"})
+		case '-':
+			tokens = append(tokens, Token{Type: MINUS, Lexeme: string(character), Literal: "null"})
+		case '+':
+			tokens = append(tokens, Token{Type: PLUS, Lexeme: string(character), Literal: "null"})
+		case ';':
+			tokens = append(tokens, Token{Type: SEMICOLON, Lexeme: string(character), Literal: "null"})
+		case '*':
+			tokens = append(tokens, Token{Type: STAR, Lexeme: string(character), Literal: "null"})
 		}
 	}
 	tokens = append(tokens, Token{Type: EOF, Lexeme: "", Literal: "null"})
