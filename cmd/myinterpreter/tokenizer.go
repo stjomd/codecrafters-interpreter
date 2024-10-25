@@ -5,6 +5,8 @@ type TokenType int
 const (
 	LEFT_PAREN = iota
 	RIGHT_PAREN
+	LEFT_BRACE
+	RIGHT_BRACE
 	EOF
 )
 func (tokenType TokenType) String() string {
@@ -13,6 +15,10 @@ func (tokenType TokenType) String() string {
 		return "LEFT_PAREN"
 	case RIGHT_PAREN:
 		return "RIGHT_PAREN"
+	case LEFT_BRACE:
+		return "LEFT_BRACE"
+	case RIGHT_BRACE:
+		return "RIGHT_BRACE"
 	case EOF:
 		return "EOF"
 	}
@@ -38,6 +44,10 @@ func Tokenize(input string) []Token {
 			tokens = append(tokens, Token{Type: LEFT_PAREN, Lexeme: string(character), Literal: "null"})
 		case ')':
 			tokens = append(tokens, Token{Type: RIGHT_PAREN, Lexeme: string(character), Literal: "null"})
+		case '{':
+			tokens = append(tokens, Token{Type: LEFT_BRACE, Lexeme: string(character), Literal: "null"})
+		case '}':
+			tokens = append(tokens, Token{Type: RIGHT_BRACE, Lexeme: string(character), Literal: "null"})
 		}
 	}
 	tokens = append(tokens, Token{Type: EOF, Lexeme: "", Literal: "null"})
