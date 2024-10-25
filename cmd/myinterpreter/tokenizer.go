@@ -1,5 +1,10 @@
 package main
 
+import (
+	"fmt"
+	"os"
+)
+
 // MARK: - Token types
 type TokenType int
 const (
@@ -55,6 +60,7 @@ func (token Token) String() string {
 
 // MARK: - Tokenizer function
 func Tokenize(input string) []Token {
+	var line uint64 = 1
 	var tokens []Token
 	for _, character := range input {
 		switch character {
@@ -78,6 +84,10 @@ func Tokenize(input string) []Token {
 			tokens = append(tokens, Token{Type: SEMICOLON, Lexeme: string(character), Literal: "null"})
 		case '*':
 			tokens = append(tokens, Token{Type: STAR, Lexeme: string(character), Literal: "null"})
+		case '\n':
+			line++
+		default:
+			fmt.Fprintf(os.Stderr, "[line %v] Error: Unexpected character: %v\n", line, string(character))
 		}
 	}
 	tokens = append(tokens, Token{Type: EOF, Lexeme: "", Literal: "null"})
