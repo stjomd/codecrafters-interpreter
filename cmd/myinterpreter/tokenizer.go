@@ -24,6 +24,10 @@ const (
 	BANG_EQUAL
 	EQUAL
 	EQUAL_EQUAL
+	GREATER
+	GREATER_EQUAL
+	LESS
+	LESS_EQUAL
 	// No-character tokens
 	EOF
 )
@@ -57,10 +61,18 @@ func (tokenType TokenType) String() string {
 		return "EQUAL"
 	case EQUAL_EQUAL:
 		return "EQUAL_EQUAL"
+	case GREATER:
+		return "GREATER"
+	case GREATER_EQUAL:
+		return "GREATER_EQUAL"
+	case LESS:
+		return "LESS"
+	case LESS_EQUAL:
+		return "LESS_EQUAL"
 	case EOF:
 		return "EOF"
 	}
-	return ""
+	return "?"
 }
 
 // MARK: - Tokens
@@ -109,6 +121,14 @@ func tokenize(input string) ([]Token, []error) {
 			i += skip
 		case '=':
 			var token, skip = lookahead(runes, i, '=', EQUAL_EQUAL, EQUAL)
+			tokens = append(tokens, token)
+			i += skip
+		case '>':
+			var token, skip = lookahead(runes, i, '=', GREATER_EQUAL, GREATER)
+			tokens = append(tokens, token)
+			i += skip
+		case '<':
+			var token, skip = lookahead(runes, i, '=', LESS_EQUAL, LESS)
 			tokens = append(tokens, token)
 			i += skip
 		case '\n':
