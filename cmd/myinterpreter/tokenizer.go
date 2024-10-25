@@ -18,6 +18,7 @@ const (
 	MINUS
 	PLUS
 	SEMICOLON
+	SLASH
 	STAR
 	// Single- or double-character tokens
 	BANG
@@ -51,6 +52,8 @@ func (tokenType TokenType) String() string {
 		return "PLUS"
 	case SEMICOLON:
 		return "SEMICOLON"
+	case SLASH:
+		return "SLASH"
 	case STAR:
 		return "STAR"
 	case BANG:
@@ -111,24 +114,31 @@ func tokenize(input string) ([]Token, []error) {
 			tokens = append(tokens, Token{Type: MINUS, Lexeme: string(character), Literal: "null"})
 		case '+':
 			tokens = append(tokens, Token{Type: PLUS, Lexeme: string(character), Literal: "null"})
+		case '/':
+			var next, peekError = peek(&runes, i + 1)
+			if peekError == nil && next == '/' {
+				i = skipUntil(&runes, '\n', i + 1)
+			} else {
+				tokens = append(tokens, Token{Type: SLASH, Lexeme: string(character), Literal: "null"})
+			}
 		case ';':
 			tokens = append(tokens, Token{Type: SEMICOLON, Lexeme: string(character), Literal: "null"})
 		case '*':
 			tokens = append(tokens, Token{Type: STAR, Lexeme: string(character), Literal: "null"})
 		case '!':
-			var token, skip = lookahead(runes, i, '=', BANG_EQUAL, BANG)
+			var token, skip = lookahead(&runes, i, '=', BANG_EQUAL, BANG)
 			tokens = append(tokens, token)
 			i += skip
 		case '=':
-			var token, skip = lookahead(runes, i, '=', EQUAL_EQUAL, EQUAL)
+			var token, skip = lookahead(&runes, i, '=', EQUAL_EQUAL, EQUAL)
 			tokens = append(tokens, token)
 			i += skip
 		case '>':
-			var token, skip = lookahead(runes, i, '=', GREATER_EQUAL, GREATER)
+			var token, skip = lookahead(&runes, i, '=', GREATER_EQUAL, GREATER)
 			tokens = append(tokens, token)
 			i += skip
 		case '<':
-			var token, skip = lookahead(runes, i, '=', LESS_EQUAL, LESS)
+			var token, skip = lookahead(&runes, i, '=', LESS_EQUAL, LESS)
 			tokens = append(tokens, token)
 			i += skip
 		case '\n':
@@ -143,10 +153,21 @@ func tokenize(input string) ([]Token, []error) {
 	return tokens, errs
 }
 
+func skipUntil(input *[]rune, match rune, startPosition int) int {
+	var slice = *input
+	var i = startPosition
+	for ; i < len(slice); i++ {
+		if slice[i] == match {
+			break
+		}
+	}
+	return i;
+}
+
 // Looks ahead one character and, if it matches the `match` argument, returns a token of type `tokenIfMatch`. Otherwise
 // returns a token of type `tokenIfNoMatch`.
-func lookahead(input []rune, position int, match rune, tokenIfMatch TokenType, tokenIfNoMatch TokenType) (Token, int) {
-	var character = input[position]
+func lookahead(input *[]rune, position int, match rune, tokenIfMatch TokenType, tokenIfNoMatch TokenType) (Token, int) {
+	var character = (*input)[position]
 	var next, peekError = peek(input, position + 1)
 	if peekError == nil && next == match {
 		return Token{Type: tokenIfMatch, Lexeme: string(character) + string(next), Literal: "null"}, 1
@@ -155,9 +176,9 @@ func lookahead(input []rune, position int, match rune, tokenIfMatch TokenType, t
 	}
 }
 
-func peek(input []rune, position int) (rune, error) {
-	if (position > 0 && position < len(input)) {
-		return input[position], nil
+func peek(input *[]rune, position int) (rune, error) {
+	if (position > 0 && position < len(*input)) {
+		return (*input)[position], nil
 	}
 	return 0, errors.New("index out of bounds")
 }
