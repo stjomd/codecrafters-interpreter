@@ -26,9 +26,9 @@ func main() {
 		os.Exit(1)
 	}
 	
-	if len(fileContents) > 0 {
-		panic("Scanner not implemented")
-	} else {
-		fmt.Println("EOF  null") // Placeholder, remove this line when implementing the scanner
+	var fileString = string(fileContents)
+	var tokens = Tokenize(fileString)
+	for _, token := range tokens {
+		fmt.Println(token)
 	}
 }
