@@ -8,6 +8,7 @@ import (
 // MARK: - Token types
 type TokenType int
 const (
+	// Single-character tokens
 	LEFT_PAREN = iota
 	RIGHT_PAREN
 	LEFT_BRACE
@@ -18,6 +19,10 @@ const (
 	PLUS
 	SEMICOLON
 	STAR
+	// Single- or double-character tokens
+	EQUAL
+	EQUAL_EQUAL
+	// No-character tokens
 	EOF
 )
 func (tokenType TokenType) String() string {
@@ -42,6 +47,10 @@ func (tokenType TokenType) String() string {
 		return "SEMICOLON"
 	case STAR:
 		return "STAR"
+	case EQUAL:
+		return "EQUAL"
+	case EQUAL_EQUAL:
+		return "EQUAL_EQUAL"
 	case EOF:
 		return "EOF"
 	}
@@ -63,7 +72,10 @@ func tokenize(input string) ([]Token, []error) {
 	var line uint64 = 1
 	var tokens []Token
 	var errs []error
-	for _, character := range input {
+
+	var runes = []rune(input)
+	for i := 0; i < len(runes); i++ {
+		var character = runes[i]
 		switch character {
 		case '(':
 			tokens = append(tokens, Token{Type: LEFT_PAREN, Lexeme: string(character), Literal: "null"})
@@ -85,6 +97,14 @@ func tokenize(input string) ([]Token, []error) {
 			tokens = append(tokens, Token{Type: SEMICOLON, Lexeme: string(character), Literal: "null"})
 		case '*':
 			tokens = append(tokens, Token{Type: STAR, Lexeme: string(character), Literal: "null"})
+		case '=':
+			var next, peekError = peek(runes, i + 1)
+			if peekError == nil && next == '=' {
+				tokens = append(tokens, Token{Type: EQUAL_EQUAL, Lexeme: string(character) + string(next), Literal: "null"})
+				i++;
+			} else {
+				tokens = append(tokens, Token{Type: EQUAL, Lexeme: string(character), Literal: "null"})
+			}
 		case '\n':
 			line++
 		default:
@@ -93,5 +113,13 @@ func tokenize(input string) ([]Token, []error) {
 		}
 	}
 	tokens = append(tokens, Token{Type: EOF, Lexeme: "", Literal: "null"})
+
 	return tokens, errs
+}
+
+func peek(input []rune, position int) (rune, error) {
+	if (position > 0 && position < len(input)) {
+		return input[position], nil
+	}
+	return 0, errors.New("index out of bounds")
 }
