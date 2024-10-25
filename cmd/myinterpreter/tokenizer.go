@@ -20,6 +20,8 @@ const (
 	SEMICOLON
 	STAR
 	// Single- or double-character tokens
+	BANG
+	BANG_EQUAL
 	EQUAL
 	EQUAL_EQUAL
 	// No-character tokens
@@ -47,6 +49,10 @@ func (tokenType TokenType) String() string {
 		return "SEMICOLON"
 	case STAR:
 		return "STAR"
+	case BANG:
+		return "BANG"
+	case BANG_EQUAL:
+		return "BANG_EQUAL"
 	case EQUAL:
 		return "EQUAL"
 	case EQUAL_EQUAL:
@@ -97,14 +103,14 @@ func tokenize(input string) ([]Token, []error) {
 			tokens = append(tokens, Token{Type: SEMICOLON, Lexeme: string(character), Literal: "null"})
 		case '*':
 			tokens = append(tokens, Token{Type: STAR, Lexeme: string(character), Literal: "null"})
+		case '!':
+			var token, skip = lookahead(runes, i, '=', BANG_EQUAL, BANG)
+			tokens = append(tokens, token)
+			i += skip
 		case '=':
-			var next, peekError = peek(runes, i + 1)
-			if peekError == nil && next == '=' {
-				tokens = append(tokens, Token{Type: EQUAL_EQUAL, Lexeme: string(character) + string(next), Literal: "null"})
-				i++;
-			} else {
-				tokens = append(tokens, Token{Type: EQUAL, Lexeme: string(character), Literal: "null"})
-			}
+			var token, skip = lookahead(runes, i, '=', EQUAL_EQUAL, EQUAL)
+			tokens = append(tokens, token)
+			i += skip
 		case '\n':
 			line++
 		default:
@@ -115,6 +121,18 @@ func tokenize(input string) ([]Token, []error) {
 	tokens = append(tokens, Token{Type: EOF, Lexeme: "", Literal: "null"})
 
 	return tokens, errs
+}
+
+// Looks ahead one character and, if it matches the `match` argument, returns a token of type `tokenIfMatch`. Otherwise
+// returns a token of type `tokenIfNoMatch`.
+func lookahead(input []rune, position int, match rune, tokenIfMatch TokenType, tokenIfNoMatch TokenType) (Token, int) {
+	var character = input[position]
+	var next, peekError = peek(input, position + 1)
+	if peekError == nil && next == match {
+		return Token{Type: tokenIfMatch, Lexeme: string(character) + string(next), Literal: "null"}, 1
+	} else {
+		return Token{Type: tokenIfNoMatch, Lexeme: string(character), Literal: "null"}, 0
+	}
 }
 
 func peek(input []rune, position int) (rune, error) {
