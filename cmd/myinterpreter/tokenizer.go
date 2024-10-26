@@ -155,13 +155,10 @@ func tokenize(input string) ([]Token, []error) {
 			i += skip
 		// MARK: Literals
 		case '"':
-			index := skipUntil(&runes, i + 1, IS_STRING_END_OR_NEWLINE)
-			if (index >= len(runes) || runes[index] == '\n') {
-				message := fmt.Sprintf("[line %v] Error: Unterminated string.", line)
+			index, err := handleString(&tokens, &runes, i)
+			if err != nil {
+				message := fmt.Sprintf("[line %v] Error: %s", line, err.Error())
 				errs = append(errs, errors.New(message))
-			} else {
-				lexeme, literal := string(runes[i:index+1]), string(runes[i+1:index])
-				tokens = append(tokens, Token{Type: STRING, Lexeme: lexeme, Literal: literal})
 			}
 			i = index
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
@@ -190,6 +187,23 @@ func tokenize(input string) ([]Token, []error) {
 	tokens = append(tokens, Token{Type: EOF, Lexeme: "", Literal: "null"})
 
 	return tokens, errs
+}
+
+type unterminatedStringError struct {}
+func (e *unterminatedStringError) Error() string {
+	return "Unterminated string."
+}
+
+func handleString(tokens *[]Token, runes *[]rune, currentPosition int) (int, error) {
+	slice := *runes
+	index := skipUntil(runes, currentPosition + 1, IS_STRING_END_OR_NEWLINE)
+	if (index >= len(slice) || slice[index] == '\n') {
+		return index, &unterminatedStringError{}
+	} else {
+		lexeme, literal := string(slice[currentPosition:index+1]), string(slice[currentPosition+1:index])
+		*tokens = append(*tokens, Token{Type: STRING, Lexeme: lexeme, Literal: literal})
+	}
+	return index, nil
 }
 
 var (
