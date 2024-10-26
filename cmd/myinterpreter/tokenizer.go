@@ -205,16 +205,13 @@ func handleString(tokens *[]Token, runes *[]rune, currentPosition int) (int, err
 	slice := *runes
 	index := skipUntil(runes, currentPosition + 1, IS_STRING_END_OR_NEWLINE)
 	if (index >= len(slice) || slice[index] == '\n') {
-		return index, &unterminatedStringError{}
+		//lint:ignore ST1005 spec requires capitalized message with period at the end
+		return index, errors.New("Unterminated string.")
 	} else {
 		lexeme, literal := string(slice[currentPosition:index+1]), string(slice[currentPosition+1:index])
 		*tokens = append(*tokens, Token{Type: STRING, Lexeme: lexeme, Literal: literal})
 	}
 	return index, nil
-}
-type unterminatedStringError struct {}
-func (e *unterminatedStringError) Error() string {
-	return "Unterminated string."
 }
 
 // MARK: Lookahead functions
