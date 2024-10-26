@@ -105,74 +105,73 @@ func tokenize(input string) ([]Token, []error) {
 	var line uint64 = 1
 	var tokens []Token
 	var errs []error
-	var runes = []rune(input)
+	runes := []rune(input)
 	for i := 0; i < len(runes); i++ {
-		character := runes[i]
-		switch character {
+		char := runes[i]
 		// MARK: Single-character tokens
-		case '(':
-			tokens = append(tokens, Token{Type: LEFT_PAREN, Lexeme: string(character), Literal: "null"})
-		case ')':
-			tokens = append(tokens, Token{Type: RIGHT_PAREN, Lexeme: string(character), Literal: "null"})
-		case '{':
-			tokens = append(tokens, Token{Type: LEFT_BRACE, Lexeme: string(character), Literal: "null"})
-		case '}':
-			tokens = append(tokens, Token{Type: RIGHT_BRACE, Lexeme: string(character), Literal: "null"})
-		case ',':
-			tokens = append(tokens, Token{Type: COMMA, Lexeme: string(character), Literal: "null"})
-		case '.':
-			tokens = append(tokens, Token{Type: DOT, Lexeme: string(character), Literal: "null"})
-		case '-':
-			tokens = append(tokens, Token{Type: MINUS, Lexeme: string(character), Literal: "null"})
-		case '+':
-			tokens = append(tokens, Token{Type: PLUS, Lexeme: string(character), Literal: "null"})
-		case '/':
+		if char == '(' {
+			tokens = append(tokens, Token{Type: LEFT_PAREN, Lexeme: string(char), Literal: "null"})
+		} else if char == ')' {
+			tokens = append(tokens, Token{Type: RIGHT_PAREN, Lexeme: string(char), Literal: "null"})
+		} else if char == '{' {
+			tokens = append(tokens, Token{Type: LEFT_BRACE, Lexeme: string(char), Literal: "null"})
+		} else if char == '}' {
+			tokens = append(tokens, Token{Type: RIGHT_BRACE, Lexeme: string(char), Literal: "null"})
+		} else if char == ',' {
+			tokens = append(tokens, Token{Type: COMMA, Lexeme: string(char), Literal: "null"})
+		} else if char == '.' {
+			tokens = append(tokens, Token{Type: DOT, Lexeme: string(char), Literal: "null"})
+		} else if char == '-' {
+			tokens = append(tokens, Token{Type: MINUS, Lexeme: string(char), Literal: "null"})
+		} else if char == '+' {
+			tokens = append(tokens, Token{Type: PLUS, Lexeme: string(char), Literal: "null"})
+		} else if char == '/' {
 			var next, peekError = peek(&runes, i + 1)
 			if peekError == nil && next == '/' {
 				i = skipUntil(&runes, i + 1, IS_NEWLINE)
 				line++
 			} else {
-				tokens = append(tokens, Token{Type: SLASH, Lexeme: string(character), Literal: "null"})
+				tokens = append(tokens, Token{Type: SLASH, Lexeme: string(char), Literal: "null"})
 			}
-		case ';':
-			tokens = append(tokens, Token{Type: SEMICOLON, Lexeme: string(character), Literal: "null"})
-		case '*':
-			tokens = append(tokens, Token{Type: STAR, Lexeme: string(character), Literal: "null"})
+		} else if char == ';' {
+			tokens = append(tokens, Token{Type: SEMICOLON, Lexeme: string(char), Literal: "null"})
+		} else if char == '*' {
+			tokens = append(tokens, Token{Type: STAR, Lexeme: string(char), Literal: "null"})
 		// MARK: Single- or double-character tokens
-		case '!':
+		} else if char == '!' {
 			token, size := handleSingleDoubleCharToken(&runes, i, '=', BANG_EQUAL, BANG)
 			tokens = append(tokens, token)
 			i += size - 1
-		case '=':
+		} else if char == '=' {
 			token, size := handleSingleDoubleCharToken(&runes, i, '=', EQUAL_EQUAL, EQUAL)
 			tokens = append(tokens, token)
 			i += size - 1
-		case '>':
+		} else if char == '>' {
 			token, size := handleSingleDoubleCharToken(&runes, i, '=', GREATER_EQUAL, GREATER)
 			tokens = append(tokens, token)
 			i += size - 1
-		case '<':
+		} else if char == '<' {
 			token, size := handleSingleDoubleCharToken(&runes, i, '=', LESS_EQUAL, LESS)
 			tokens = append(tokens, token)
 			i += size - 1
 		// MARK: Literals
-		case '"':
+		} else if char == '"' {
 			index, err := handleString(&tokens, &runes, i)
 			if err != nil {
 				message := fmt.Sprintf("[line %v] Error: %s", line, err.Error())
 				errs = append(errs, errors.New(message))
 			}
 			i = index
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+		} else if unicode.IsDigit(char) {
 			index := handleNumber(&tokens, &runes, i)
 			i = index - 1
 		// MARK: Miscellaneous
-		case '\n':
+		} else if char == '\n' {
 			line++
-		case ' ', '\t':
+		}	else if char == ' ' || char == '\t' {
 			continue
-		default:
-			message := fmt.Sprintf("[line %v] Error: Unexpected character: %v", line, string(character))
+		} else {
+			message := fmt.Sprintf("[line %v] Error: Unexpected character: %v", line, string(char))
 			errs = append(errs, errors.New(message))
 		}
 	}
