@@ -143,6 +143,8 @@ func tokenize(input string) ([]Token, []error) {
 			i += skip
 		case '\n':
 			line++
+		case ' ', '\t':
+			continue
 		default:
 			var message = fmt.Sprintf("[line %v] Error: Unexpected character: %v", line, string(character))
 			errs = append(errs, errors.New(message))
