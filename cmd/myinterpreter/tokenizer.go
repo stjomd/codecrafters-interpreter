@@ -29,6 +29,8 @@ const (
 	GREATER_EQUAL
 	LESS
 	LESS_EQUAL
+	// Literals
+	STRING
 	// No-character tokens
 	EOF
 )
@@ -72,6 +74,8 @@ func (tokenType TokenType) String() string {
 		return "LESS"
 	case LESS_EQUAL:
 		return "LESS_EQUAL"
+	case STRING:
+		return "STRING"
 	case EOF:
 		return "EOF"
 	}
@@ -98,6 +102,7 @@ func tokenize(input string) ([]Token, []error) {
 	for i := 0; i < len(runes); i++ {
 		var character = runes[i]
 		switch character {
+		// MARK: Single-character tokens
 		case '(':
 			tokens = append(tokens, Token{Type: LEFT_PAREN, Lexeme: string(character), Literal: "null"})
 		case ')':
@@ -126,6 +131,7 @@ func tokenize(input string) ([]Token, []error) {
 			tokens = append(tokens, Token{Type: SEMICOLON, Lexeme: string(character), Literal: "null"})
 		case '*':
 			tokens = append(tokens, Token{Type: STAR, Lexeme: string(character), Literal: "null"})
+		// MARK: Single- or double-character tokens
 		case '!':
 			var token, skip = lookahead(&runes, i, '=', BANG_EQUAL, BANG)
 			tokens = append(tokens, token)
@@ -142,6 +148,18 @@ func tokenize(input string) ([]Token, []error) {
 			var token, skip = lookahead(&runes, i, '=', LESS_EQUAL, LESS)
 			tokens = append(tokens, token)
 			i += skip
+		// MARK: Literals
+		case '"':
+			index := skipUntilOnLine(&runes, '"', i + 1)
+			if (index >= len(runes) || runes[index] == '\n') {
+				message := fmt.Sprintf("[line %v] Error: Unterminated string.", line)
+				errs = append(errs, errors.New(message))
+			} else {
+				lexeme, literal := string(runes[i:index+1]), string(runes[i+1:index])
+				tokens = append(tokens, Token{Type: STRING, Lexeme: lexeme, Literal: literal})
+			}
+			i = index
+		// MARK: Miscellaneous
 		case '\n':
 			line++
 		case ' ', '\t':
@@ -161,6 +179,19 @@ func skipUntil(input *[]rune, match rune, startPosition int) int {
 	var i = startPosition
 	for ; i < len(slice); i++ {
 		if slice[i] == match {
+			break
+		}
+	}
+	return i;
+}
+
+func skipUntilOnLine(input *[]rune, match rune, startPosition int) int {
+	var slice = *input
+	var i = startPosition
+	for ; i < len(slice); i++ {
+		if slice[i] == match {
+			break
+		} else if slice[i] == '\n' {
 			break
 		}
 	}
