@@ -2,131 +2,131 @@ package main
 
 // MARK: - Token types
 
-type TokenType int
+type tokenType int
 const (
 	// Single-character tokens
-	LEFT_PAREN = iota
-	RIGHT_PAREN
-	LEFT_BRACE
-	RIGHT_BRACE
-	COMMA
-	DOT
-	MINUS
-	PLUS
-	SEMICOLON
-	SLASH
-	STAR
+	LeftParen = iota
+	RightParen
+	LeftBrace
+	RightBrace
+	Comma
+	Dot
+	Minus
+	Plus
+	Semicolon
+	Slash
+	Star
 	// Single- or double-character tokens
-	BANG
-	BANG_EQUAL
-	EQUAL
-	EQUAL_EQUAL
-	GREATER
-	GREATER_EQUAL
-	LESS
-	LESS_EQUAL
+	Bang
+	BangEqual
+	Equal
+	EqualEqual
+	Greater
+	GreaterEqual
+	Less
+	LessEqual
 	// Literals
-	IDENTIFIER
-	STRING
-	NUMBER
+	Identifier
+	String
+	Number
 	// Keywords
-	AND
-	CLASS
-	ELSE
-	FALSE
-	FUN
-	FOR
-	IF
-	NIL
-	OR
-	PRINT
-	RETURN
-	SUPER
-	THIS
-	TRUE
-	VAR
-	WHILE
+	And
+	Class
+	Else
+	False
+	Fun
+	For
+	If
+	Nil
+	Or
+	Print
+	Return
+	Super
+	This
+	True
+	Var
+	While
 	// No-character tokens
 	EOF
 )
 
-func (tokenType TokenType) String() string {
-	switch tokenType {
-	case LEFT_PAREN:
+func (tt tokenType) String() string {
+	switch tt {
+	case LeftParen:
 		return "LEFT_PAREN"
-	case RIGHT_PAREN:
+	case RightParen:
 		return "RIGHT_PAREN"
-	case LEFT_BRACE:
+	case LeftBrace:
 		return "LEFT_BRACE"
-	case RIGHT_BRACE:
+	case RightBrace:
 		return "RIGHT_BRACE"
-	case COMMA:
+	case Comma:
 		return "COMMA"
-	case DOT:
+	case Dot:
 		return "DOT"
-	case MINUS:
+	case Minus:
 		return "MINUS"
-	case PLUS:
+	case Plus:
 		return "PLUS"
-	case SEMICOLON:
+	case Semicolon:
 		return "SEMICOLON"
-	case SLASH:
+	case Slash:
 		return "SLASH"
-	case STAR:
+	case Star:
 		return "STAR"
-	case BANG:
+	case Bang:
 		return "BANG"
-	case BANG_EQUAL:
+	case BangEqual:
 		return "BANG_EQUAL"
-	case EQUAL:
+	case Equal:
 		return "EQUAL"
-	case EQUAL_EQUAL:
+	case EqualEqual:
 		return "EQUAL_EQUAL"
-	case GREATER:
+	case Greater:
 		return "GREATER"
-	case GREATER_EQUAL:
+	case GreaterEqual:
 		return "GREATER_EQUAL"
-	case LESS:
+	case Less:
 		return "LESS"
-	case LESS_EQUAL:
+	case LessEqual:
 		return "LESS_EQUAL"
-	case IDENTIFIER:
+	case Identifier:
 		return "IDENTIFIER"
-	case STRING:
+	case String:
 		return "STRING"
-	case NUMBER:
+	case Number:
 		return "NUMBER"
-	case AND:
+	case And:
 		return "AND"
-	case CLASS:
+	case Class:
 		return "CLASS"
-	case ELSE:
+	case Else:
 		return "ELSE"
-	case FALSE:
+	case False:
 		return "FALSE"
-	case FUN:
+	case Fun:
 		return "FUN"
-	case FOR:
+	case For:
 		return "FOR"
-	case IF:
+	case If:
 		return "IF"
-	case NIL:
+	case Nil:
 		return "NIL"
-	case OR:
+	case Or:
 		return "OR"
-	case PRINT:
+	case Print:
 		return "PRINT"
-	case RETURN:
+	case Return:
 		return "RETURN"
-	case SUPER:
+	case Super:
 		return "SUPER"
-	case THIS:
+	case This:
 		return "THIS"
-	case TRUE:
+	case True:
 		return "TRUE"
-	case VAR:
+	case Var:
 		return "VAR"
-	case WHILE:
+	case While:
 		return "WHILE"
 	case EOF:
 		return "EOF"
@@ -134,35 +134,35 @@ func (tokenType TokenType) String() string {
 	return "?"
 }
 
-var keywords = map[string]TokenType {
-	"and": AND,
-	"class": CLASS,
-	"else": ELSE,
-	"false": FALSE,
-	"fun": FUN,
-	"for": FOR,
-	"if": IF,
-	"nil": NIL,
-	"or": OR,
-	"print": PRINT,
-	"return": RETURN,
-	"super": SUPER,
-	"this": THIS,
-	"true": TRUE,
-	"var": VAR,
-	"while": WHILE,
+var keywords = map[string]tokenType {
+	"and": And,
+	"class": Class,
+	"else": Else,
+	"false": False,
+	"fun": Fun,
+	"for": For,
+	"if": If,
+	"nil": Nil,
+	"or": Or,
+	"print": Print,
+	"return": Return,
+	"super": Super,
+	"this": This,
+	"true": True,
+	"var": Var,
+	"while": While,
 }
 
-var singleCharTokens = map[rune]TokenType {
-	'(': LEFT_PAREN,
-	')': RIGHT_PAREN,
-	'{': LEFT_BRACE,
-	'}': RIGHT_BRACE,
-	',': COMMA,
-	'.': DOT,
-	'-': MINUS,
-	'+': PLUS,
-	'/': SLASH,
-	';': SEMICOLON,
-	'*': STAR,
+var singleCharTokens = map[rune]tokenType {
+	'(': LeftParen,
+	')': RightParen,
+	'{': LeftBrace,
+	'}': RightBrace,
+	',': Comma,
+	'.': Dot,
+	'-': Minus,
+	'+': Plus,
+	'/': Slash,
+	';': Semicolon,
+	'*': Star,
 }
