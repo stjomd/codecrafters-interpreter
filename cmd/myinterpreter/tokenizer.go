@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"unicode"
 )
 
 // MARK: - Token types
@@ -31,6 +33,7 @@ const (
 	LESS_EQUAL
 	// Literals
 	STRING
+	NUMBER
 	// No-character tokens
 	EOF
 )
@@ -76,6 +79,8 @@ func (tokenType TokenType) String() string {
 		return "LESS_EQUAL"
 	case STRING:
 		return "STRING"
+	case NUMBER:
+		return "NUMBER"
 	case EOF:
 		return "EOF"
 	}
@@ -122,7 +127,8 @@ func tokenize(input string) ([]Token, []error) {
 		case '/':
 			var next, peekError = peek(&runes, i + 1)
 			if peekError == nil && next == '/' {
-				i = skipUntil(&runes, '\n', i + 1)
+				isNewline := func(x rune) bool { return x == '\n' }
+				i = skipUntil(&runes, i + 1, isNewline)
 				line++
 			} else {
 				tokens = append(tokens, Token{Type: SLASH, Lexeme: string(character), Literal: "null"})
@@ -150,7 +156,8 @@ func tokenize(input string) ([]Token, []error) {
 			i += skip
 		// MARK: Literals
 		case '"':
-			index := skipUntilOnLine(&runes, '"', i + 1)
+			isStringEndOrNewline := func(x rune) bool { return x == '"' || x == '\n' }
+			index := skipUntil(&runes, i + 1, isStringEndOrNewline)
 			if (index >= len(runes) || runes[index] == '\n') {
 				message := fmt.Sprintf("[line %v] Error: Unterminated string.", line)
 				errs = append(errs, errors.New(message))
@@ -159,6 +166,20 @@ func tokenize(input string) ([]Token, []error) {
 				tokens = append(tokens, Token{Type: STRING, Lexeme: lexeme, Literal: literal})
 			}
 			i = index
+		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+			isEndOfNumber := func(x rune) bool { return x != '.' && !unicode.IsDigit(x) }
+			index := skipUntil(&runes, i + 1, isEndOfNumber)
+			lexeme := string(runes[i:index])
+			literal, convError := strconv.ParseFloat(lexeme, 64)
+			if convError != nil {
+				panic(1)
+			}
+			stringLiteral := fmt.Sprintf("%g", literal)
+			if literal == float64(int(literal)) {
+				stringLiteral = stringLiteral + ".0"
+			}
+			tokens = append(tokens, Token{Type: NUMBER, Lexeme: lexeme, Literal: stringLiteral})
+			i = index - 1
 		// MARK: Miscellaneous
 		case '\n':
 			line++
@@ -174,28 +195,12 @@ func tokenize(input string) ([]Token, []error) {
 	return tokens, errs
 }
 
-func skipUntil(input *[]rune, match rune, startPosition int) int {
-	var slice = *input
-	var i = startPosition
+func skipUntil(input *[]rune, startPosition int, condition func(rune) bool) int {
+	slice, i := *input, startPosition
 	for ; i < len(slice); i++ {
-		if slice[i] == match {
-			break
-		}
+		if condition(slice[i]) { break }
 	}
-	return i;
-}
-
-func skipUntilOnLine(input *[]rune, match rune, startPosition int) int {
-	var slice = *input
-	var i = startPosition
-	for ; i < len(slice); i++ {
-		if slice[i] == match {
-			break
-		} else if slice[i] == '\n' {
-			break
-		}
-	}
-	return i;
+	return i
 }
 
 // Looks ahead one character and, if it matches the `match` argument, returns a token of type `tokenIfMatch`. Otherwise
