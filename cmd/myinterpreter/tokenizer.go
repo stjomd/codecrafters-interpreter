@@ -162,17 +162,7 @@ func tokenize(input string) ([]Token, []error) {
 			}
 			i = index
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-			index := skipUntil(&runes, i + 1, IS_END_OF_NUMBER)
-			lexeme := string(runes[i:index])
-			literal, convError := strconv.ParseFloat(lexeme, 64)
-			if convError != nil {
-				panic(1)
-			}
-			stringLiteral := fmt.Sprintf("%g", literal)
-			if literal == float64(int(literal)) {
-				stringLiteral = stringLiteral + ".0"
-			}
-			tokens = append(tokens, Token{Type: NUMBER, Lexeme: lexeme, Literal: stringLiteral})
+			index := handleNumber(&tokens, &runes, i)
 			i = index - 1
 		// MARK: Miscellaneous
 		case '\n':
@@ -187,6 +177,22 @@ func tokenize(input string) ([]Token, []error) {
 	tokens = append(tokens, Token{Type: EOF, Lexeme: "", Literal: "null"})
 
 	return tokens, errs
+}
+
+func handleNumber(tokens *[]Token, runes *[]rune, currentPosition int) int {
+	slice := *runes
+	index := skipUntil(runes, currentPosition + 1, IS_END_OF_NUMBER)
+	lexeme := string(slice[currentPosition:index])
+	literal, convError := strconv.ParseFloat(lexeme, 64)
+	if convError != nil {
+		panic("could not parse float")
+	}
+	stringLiteral := fmt.Sprintf("%g", literal)
+	if literal == float64(int(literal)) {
+		stringLiteral = stringLiteral + ".0"
+	}
+	*tokens = append(*tokens, Token{Type: NUMBER, Lexeme: lexeme, Literal: stringLiteral})
+	return index
 }
 
 type unterminatedStringError struct {}
