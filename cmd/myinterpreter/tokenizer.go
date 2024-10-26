@@ -8,6 +8,7 @@ import (
 )
 
 // MARK: - Token types
+
 type TokenType int
 const (
 	// Single-character tokens
@@ -88,6 +89,7 @@ func (tokenType TokenType) String() string {
 }
 
 // MARK: - Tokens
+
 type Token struct {
 	Type TokenType
 	Lexeme string
@@ -98,14 +100,14 @@ func (token Token) String() string {
 }
 
 // MARK: - Tokenizer function
+
 func tokenize(input string) ([]Token, []error) {
 	var line uint64 = 1
 	var tokens []Token
 	var errs []error
-
 	var runes = []rune(input)
 	for i := 0; i < len(runes); i++ {
-		var character = runes[i]
+		character := runes[i]
 		switch character {
 		// MARK: Single-character tokens
 		case '(':
@@ -138,19 +140,19 @@ func tokenize(input string) ([]Token, []error) {
 			tokens = append(tokens, Token{Type: STAR, Lexeme: string(character), Literal: "null"})
 		// MARK: Single- or double-character tokens
 		case '!':
-			var token, skip = lookahead(&runes, i, '=', BANG_EQUAL, BANG)
+			token, skip := lookahead(&runes, i, '=', BANG_EQUAL, BANG)
 			tokens = append(tokens, token)
 			i += skip
 		case '=':
-			var token, skip = lookahead(&runes, i, '=', EQUAL_EQUAL, EQUAL)
+			token, skip := lookahead(&runes, i, '=', EQUAL_EQUAL, EQUAL)
 			tokens = append(tokens, token)
 			i += skip
 		case '>':
-			var token, skip = lookahead(&runes, i, '=', GREATER_EQUAL, GREATER)
+			token, skip := lookahead(&runes, i, '=', GREATER_EQUAL, GREATER)
 			tokens = append(tokens, token)
 			i += skip
 		case '<':
-			var token, skip = lookahead(&runes, i, '=', LESS_EQUAL, LESS)
+			token, skip := lookahead(&runes, i, '=', LESS_EQUAL, LESS)
 			tokens = append(tokens, token)
 			i += skip
 		// MARK: Literals
@@ -170,7 +172,7 @@ func tokenize(input string) ([]Token, []error) {
 		case ' ', '\t':
 			continue
 		default:
-			var message = fmt.Sprintf("[line %v] Error: Unexpected character: %v", line, string(character))
+			message := fmt.Sprintf("[line %v] Error: Unexpected character: %v", line, string(character))
 			errs = append(errs, errors.New(message))
 		}
 	}
@@ -179,6 +181,9 @@ func tokenize(input string) ([]Token, []error) {
 	return tokens, errs
 }
 
+// MARK: - Helper functions
+
+// Number handling
 func handleNumber(tokens *[]Token, runes *[]rune, currentPosition int) int {
 	slice := *runes
 	index := skipUntil(runes, currentPosition + 1, IS_END_OF_NUMBER)
@@ -195,11 +200,7 @@ func handleNumber(tokens *[]Token, runes *[]rune, currentPosition int) int {
 	return index
 }
 
-type unterminatedStringError struct {}
-func (e *unterminatedStringError) Error() string {
-	return "Unterminated string."
-}
-
+// String handling
 func handleString(tokens *[]Token, runes *[]rune, currentPosition int) (int, error) {
 	slice := *runes
 	index := skipUntil(runes, currentPosition + 1, IS_STRING_END_OR_NEWLINE)
@@ -211,12 +212,20 @@ func handleString(tokens *[]Token, runes *[]rune, currentPosition int) (int, err
 	}
 	return index, nil
 }
+type unterminatedStringError struct {}
+func (e *unterminatedStringError) Error() string {
+	return "Unterminated string."
+}
+
+// MARK: Lookahead functions
 
 var (
 	IS_NEWLINE               = func(x rune) bool { return x == '\n' }
 	IS_STRING_END_OR_NEWLINE = func(x rune) bool { return x == '"' || x == '\n' }
 	IS_END_OF_NUMBER         = func(x rune) bool { return x != '.' && !unicode.IsDigit(x) }
 )
+// Looks ahead, starting at the specified position, and until a specified condition is fulfiled or the end of input is
+// reached, and returns the position.
 func skipUntil(input *[]rune, startPosition int, condition func(rune) bool) int {
 	slice, i := *input, startPosition
 	for ; i < len(slice); i++ {
@@ -228,8 +237,8 @@ func skipUntil(input *[]rune, startPosition int, condition func(rune) bool) int 
 // Looks ahead one character and, if it matches the `match` argument, returns a token of type `tokenIfMatch`. Otherwise
 // returns a token of type `tokenIfNoMatch`.
 func lookahead(input *[]rune, position int, match rune, tokenIfMatch TokenType, tokenIfNoMatch TokenType) (Token, int) {
-	var character = (*input)[position]
-	var next, peekError = peek(input, position + 1)
+	character := (*input)[position]
+	next, peekError := peek(input, position + 1)
 	if peekError == nil && next == match {
 		return Token{Type: tokenIfMatch, Lexeme: string(character) + string(next), Literal: "null"}, 1
 	} else {
@@ -237,6 +246,8 @@ func lookahead(input *[]rune, position int, match rune, tokenIfMatch TokenType, 
 	}
 }
 
+// Peeks at the rune at the specified position. Returns an error if the position is out of bounds; otherwise, returns
+// the rune at that position.
 func peek(input *[]rune, position int) (rune, error) {
 	if (position > 0 && position < len(*input)) {
 		return (*input)[position], nil
