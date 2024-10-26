@@ -127,8 +127,7 @@ func tokenize(input string) ([]Token, []error) {
 		case '/':
 			var next, peekError = peek(&runes, i + 1)
 			if peekError == nil && next == '/' {
-				isNewline := func(x rune) bool { return x == '\n' }
-				i = skipUntil(&runes, i + 1, isNewline)
+				i = skipUntil(&runes, i + 1, IS_NEWLINE)
 				line++
 			} else {
 				tokens = append(tokens, Token{Type: SLASH, Lexeme: string(character), Literal: "null"})
@@ -156,8 +155,7 @@ func tokenize(input string) ([]Token, []error) {
 			i += skip
 		// MARK: Literals
 		case '"':
-			isStringEndOrNewline := func(x rune) bool { return x == '"' || x == '\n' }
-			index := skipUntil(&runes, i + 1, isStringEndOrNewline)
+			index := skipUntil(&runes, i + 1, IS_STRING_END_OR_NEWLINE)
 			if (index >= len(runes) || runes[index] == '\n') {
 				message := fmt.Sprintf("[line %v] Error: Unterminated string.", line)
 				errs = append(errs, errors.New(message))
@@ -167,8 +165,7 @@ func tokenize(input string) ([]Token, []error) {
 			}
 			i = index
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-			isEndOfNumber := func(x rune) bool { return x != '.' && !unicode.IsDigit(x) }
-			index := skipUntil(&runes, i + 1, isEndOfNumber)
+			index := skipUntil(&runes, i + 1, IS_END_OF_NUMBER)
 			lexeme := string(runes[i:index])
 			literal, convError := strconv.ParseFloat(lexeme, 64)
 			if convError != nil {
@@ -195,6 +192,11 @@ func tokenize(input string) ([]Token, []error) {
 	return tokens, errs
 }
 
+var (
+	IS_NEWLINE               = func(x rune) bool { return x == '\n' }
+	IS_STRING_END_OR_NEWLINE = func(x rune) bool { return x == '"' || x == '\n' }
+	IS_END_OF_NUMBER         = func(x rune) bool { return x != '.' && !unicode.IsDigit(x) }
+)
 func skipUntil(input *[]rune, startPosition int, condition func(rune) bool) int {
 	slice, i := *input, startPosition
 	for ; i < len(slice); i++ {
