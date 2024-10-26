@@ -33,6 +33,7 @@ const (
 	LESS
 	LESS_EQUAL
 	// Literals
+	IDENTIFIER
 	STRING
 	NUMBER
 	// No-character tokens
@@ -78,6 +79,8 @@ func (tokenType TokenType) String() string {
 		return "LESS"
 	case LESS_EQUAL:
 		return "LESS_EQUAL"
+	case IDENTIFIER:
+		return "IDENTIFIER"
 	case STRING:
 		return "STRING"
 	case NUMBER:
@@ -165,6 +168,9 @@ func tokenize(input string) ([]Token, []error) {
 		} else if unicode.IsDigit(char) {
 			index := handleNumber(&tokens, &runes, i)
 			i = index - 1
+		} else if unicode.IsLetter(char) || char == '_' {
+			index := handleIdentifier(&tokens, &runes, i)
+			i = index - 1
 		// MARK: Miscellaneous
 		} else if char == '\n' {
 			line++
@@ -181,6 +187,15 @@ func tokenize(input string) ([]Token, []error) {
 }
 
 // MARK: - Helper functions
+
+// Identifier handling
+func handleIdentifier(tokens *[]Token, runes *[]rune, currentPosition int) int {
+	slice := *runes
+	index := skipUntil(runes, currentPosition + 1, IS_IDENTIFIER_END)
+	lexeme := string(slice[currentPosition:index])
+	*tokens = append(*tokens, Token{Type: IDENTIFIER, Lexeme: lexeme, Literal: "null"})
+	return index
+}
 
 // Number handling
 func handleNumber(tokens *[]Token, runes *[]rune, currentPosition int) int {
@@ -233,6 +248,7 @@ var (
 	IS_NEWLINE               = func(x rune) bool { return x == '\n' }
 	IS_STRING_END_OR_NEWLINE = func(x rune) bool { return x == '"' || x == '\n' }
 	IS_END_OF_NUMBER         = func(x rune) bool { return x != '.' && !unicode.IsDigit(x) }
+	IS_IDENTIFIER_END        = func(x rune) bool { return !unicode.IsLetter(x) && !unicode.IsDigit(x) && x != '_' }
 )
 // Looks ahead, starting at the specified position, and until a specified condition is fulfiled or the end of input is
 // reached, and returns the position.
