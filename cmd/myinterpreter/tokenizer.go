@@ -28,34 +28,16 @@ func tokenize(input string) ([]Token, []error) {
 	for i := 0; i < len(runes); i++ {
 		char := runes[i]
 		// MARK: Single-character tokens
-		if char == '(' {
-			tokens = append(tokens, Token{Type: LEFT_PAREN, Lexeme: string(char), Literal: "null"})
-		} else if char == ')' {
-			tokens = append(tokens, Token{Type: RIGHT_PAREN, Lexeme: string(char), Literal: "null"})
-		} else if char == '{' {
-			tokens = append(tokens, Token{Type: LEFT_BRACE, Lexeme: string(char), Literal: "null"})
-		} else if char == '}' {
-			tokens = append(tokens, Token{Type: RIGHT_BRACE, Lexeme: string(char), Literal: "null"})
-		} else if char == ',' {
-			tokens = append(tokens, Token{Type: COMMA, Lexeme: string(char), Literal: "null"})
-		} else if char == '.' {
-			tokens = append(tokens, Token{Type: DOT, Lexeme: string(char), Literal: "null"})
-		} else if char == '-' {
-			tokens = append(tokens, Token{Type: MINUS, Lexeme: string(char), Literal: "null"})
-		} else if char == '+' {
-			tokens = append(tokens, Token{Type: PLUS, Lexeme: string(char), Literal: "null"})
-		} else if char == '/' {
+		singleCharTokenType, isSingleCharToken := singleCharTokens[char]
+		if char == '/' {
+			// comment handling
 			var next, peekError = peek(&runes, i + 1)
 			if peekError == nil && next == '/' {
 				i = skipUntil(&runes, i + 1, IS_NEWLINE)
 				line++
-			} else {
-				tokens = append(tokens, Token{Type: SLASH, Lexeme: string(char), Literal: "null"})
 			}
-		} else if char == ';' {
-			tokens = append(tokens, Token{Type: SEMICOLON, Lexeme: string(char), Literal: "null"})
-		} else if char == '*' {
-			tokens = append(tokens, Token{Type: STAR, Lexeme: string(char), Literal: "null"})
+		} else if isSingleCharToken {
+			tokens = append(tokens, Token{Type: singleCharTokenType, Lexeme: string(char), Literal: "null"})
 		// MARK: Single- or double-character tokens
 		} else if char == '!' {
 			token, size := handleSingleDoubleCharToken(&runes, i, '=', BANG_EQUAL, BANG)

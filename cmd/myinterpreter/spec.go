@@ -134,7 +134,7 @@ func (tokenType TokenType) String() string {
 	return "?"
 }
 
-var keywords = map[string]TokenType{
+var keywords = map[string]TokenType {
 	"and": AND,
 	"class": CLASS,
 	"else": ELSE,
@@ -151,4 +151,18 @@ var keywords = map[string]TokenType{
 	"true": TRUE,
 	"var": VAR,
 	"while": WHILE,
+}
+
+var singleCharTokens = map[rune]TokenType {
+	'(': LEFT_PAREN,
+	')': RIGHT_PAREN,
+	'{': LEFT_BRACE,
+	'}': RIGHT_BRACE,
+	',': COMMA,
+	'.': DOT,
+	'-': MINUS,
+	'+': PLUS,
+	'/': SLASH,
+	';': SEMICOLON,
+	'*': STAR,
 }
