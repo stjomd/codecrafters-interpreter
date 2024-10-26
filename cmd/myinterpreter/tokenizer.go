@@ -118,6 +118,7 @@ func tokenize(input string) ([]Token, []error) {
 			var next, peekError = peek(&runes, i + 1)
 			if peekError == nil && next == '/' {
 				i = skipUntil(&runes, '\n', i + 1)
+				line++
 			} else {
 				tokens = append(tokens, Token{Type: SLASH, Lexeme: string(character), Literal: "null"})
 			}
