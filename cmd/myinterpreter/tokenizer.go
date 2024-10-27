@@ -40,21 +40,13 @@ func tokenize(input string) ([]token, []error) {
 			tokens = append(tokens, token{tType: singleCharTokenType, lexeme: string(char), literal: "null"})
 		// MARK: Single- or double-character tokens
 		} else if char == '!' {
-			token, size := handleSingleDoubleCharToken(&runes, i, '=', BangEqual, Bang)
-			tokens = append(tokens, token)
-			i += size - 1
+			i = handleSingleDoubleCharToken(&tokens, &runes, i, '=', BangEqual, Bang)
 		} else if char == '=' {
-			token, size := handleSingleDoubleCharToken(&runes, i, '=', EqualEqual, Equal)
-			tokens = append(tokens, token)
-			i += size - 1
+			i = handleSingleDoubleCharToken(&tokens, &runes, i, '=', EqualEqual, Equal)
 		} else if char == '>' {
-			token, size := handleSingleDoubleCharToken(&runes, i, '=', GreaterEqual, Greater)
-			tokens = append(tokens, token)
-			i += size - 1
+			i = handleSingleDoubleCharToken(&tokens, &runes, i, '=', GreaterEqual, Greater)
 		} else if char == '<' {
-			token, size := handleSingleDoubleCharToken(&runes, i, '=', LessEqual, Less)
-			tokens = append(tokens, token)
-			i += size - 1
+			i = handleSingleDoubleCharToken(&tokens, &runes, i, '=', LessEqual, Less)
 		// MARK: Literals
 		} else if char == '"' {
 			index, err := handleString(&tokens, &runes, i)
@@ -134,15 +126,18 @@ func handleString(tokens *[]token, runes *[]rune, currentPosition int) (int, err
 // Looks ahead one character and, if it matches the `match` argument, returns a token of type `tokenIfMatch`. Otherwise
 // returns a token of type `tokenIfNoMatch`. Moreover, returns the size of the lexeme.
 func handleSingleDoubleCharToken(
-	input *[]rune, position int, match rune, tokenIfMatch tokenType, tokenIfNoMatch tokenType,
-) (token, int) {
+	tokens *[]token, input *[]rune, position int, match rune, tokenIfMatch tokenType, tokenIfNoMatch tokenType,
+) int {
+	var newToken token;
 	character := (*input)[position]
 	next, peekError := peek(input, position + 1)
 	if peekError == nil && next == match {
-		return token{tType: tokenIfMatch, lexeme: string(character) + string(next), literal: "null"}, 2
+		newToken = token{tType: tokenIfMatch, lexeme: string(character) + string(next), literal: "null"}
 	} else {
-		return token{tType: tokenIfNoMatch, lexeme: string(character), literal: "null"}, 1
+		newToken = token{tType: tokenIfNoMatch, lexeme: string(character), literal: "null"}
 	}
+	*tokens = append(*tokens, newToken)
+	return position + len(newToken.lexeme) - 1
 }
 
 // MARK: Lookahead functions
