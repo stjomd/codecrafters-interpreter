@@ -28,7 +28,6 @@ func tokenize(input string) ([]token, []error) {
 	for i := 0; i < len(runes); i++ {
 		char := runes[i]
 		// MARK: Single-character tokens
-		singleCharTokenType, isSingleCharToken := singleCharTokens[char]
 		if char == '/' {
 			// comment handling
 			var next, peekError = peek(&runes, i + 1)
@@ -36,7 +35,7 @@ func tokenize(input string) ([]token, []error) {
 				i = skipUntil(&runes, i + 1, IsNewline)
 				line++
 			}
-		} else if isSingleCharToken {
+		} else if singleCharTokenType, isSingleCharToken := singleCharTokens[char]; isSingleCharToken {
 			tokens = append(tokens, token{tType: singleCharTokenType, lexeme: string(char), literal: "null"})
 		// MARK: Single- or double-character tokens
 		} else if char == '!' {
@@ -123,8 +122,7 @@ func handleString(tokens *[]token, runes *[]rune, currentPosition int) (int, err
 	return index, nil
 }
 
-// Looks ahead one character and, if it matches the `match` argument, returns a token of type `tokenIfMatch`. Otherwise
-// returns a token of type `tokenIfNoMatch`. Moreover, returns the size of the lexeme.
+// Single- and double-character token handling
 func handleSingleDoubleCharToken(
 	tokens *[]token, input *[]rune, position int, match rune, tokenIfMatch tokenType, tokenIfNoMatch tokenType,
 ) int {
