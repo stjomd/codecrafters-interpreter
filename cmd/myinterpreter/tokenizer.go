@@ -3,39 +3,13 @@ package main
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"strconv"
 	"unicode"
 )
 
-// MARK: - Tokens
-
-type token struct {
-	tType tokenType
-	lexeme string
-	literal any
-}
-func (token token) String() string {
-	literalString := ""
-	if (token.literal == nil) {
-		literalString = "null"
-	} else if reflect.TypeOf(token.literal).Kind() == reflect.Float64 {
-		// if the underlying type of `literal` is float64, do some custom handling
-		literalString = fmt.Sprintf("%g", token.literal)
-		if token.literal == float64(int(token.literal.(float64))) {
-			literalString = literalString + ".0"
-		}
-	} else {
-		literalString = fmt.Sprintf("%v", token.literal)
-	}
-	return fmt.Sprintf("%v %v %v", token.tType.String(), token.lexeme, literalString)
-}
-
-// MARK: - Tokenizer function
-
-func tokenize(input *string) ([]token, []error) {
+func tokenize(input *string) ([]Token, []error) {
 	var line uint64 = 1
-	var tokens []token
+	var tokens []Token
 	var errs []error
 	runes := []rune(*input)
 	for i := 0; i < len(runes); i++ {
@@ -45,11 +19,11 @@ func tokenize(input *string) ([]token, []error) {
 			// comment handling
 			var next, peekError = peek(&runes, i + 1)
 			if peekError == nil && next == '/' {
-				i = skipUntil(&runes, i + 1, IsNewline)
+				i = skipUntil(&runes, i + 1, isNewline)
 				line++
 			}
-		} else if singleCharTokenType, isSingleCharToken := singleCharTokens[char]; isSingleCharToken {
-			tokens = append(tokens, token{tType: singleCharTokenType, lexeme: string(char), literal: nil})
+		} else if singleCharTokenType, isSingleCharToken := SingleCharTokens[char]; isSingleCharToken {
+			tokens = append(tokens, Token{Type: singleCharTokenType, Lexeme: string(char), Literal: nil})
 		// MARK: Single- or double-character tokens
 		} else if char == '!' {
 			i = handleSingleDoubleCharToken(&tokens, &runes, i, '=', BangEqual, Bang)
@@ -83,7 +57,7 @@ func tokenize(input *string) ([]token, []error) {
 			errs = append(errs, errors.New(message))
 		}
 	}
-	tokens = append(tokens, token{tType: EOF, lexeme: "", literal: nil})
+	tokens = append(tokens, Token{Type: EOF, Lexeme: "", Literal: nil})
 
 	return tokens, errs
 }
@@ -91,69 +65,69 @@ func tokenize(input *string) ([]token, []error) {
 // MARK: - Helper functions
 
 // Identifier handling
-func handleIdentifierAndKeyword(tokens *[]token, runes *[]rune, currentPosition int) int {
+func handleIdentifierAndKeyword(tokens *[]Token, runes *[]rune, currentPosition int) int {
 	slice := *runes
-	index := skipUntil(runes, currentPosition + 1, IsIdentifierEnd)
+	index := skipUntil(runes, currentPosition + 1, isIdentifierEnd)
 	lexeme := string(slice[currentPosition:index])
-	keywordTokenType, presentInKeywords := keywords[lexeme]
+	keywordTokenType, presentInKeywords := Keywords[lexeme]
 	if presentInKeywords {
-		*tokens = append(*tokens, token{tType: keywordTokenType, lexeme: lexeme, literal: nil})
+		*tokens = append(*tokens, Token{Type: keywordTokenType, Lexeme: lexeme, Literal: nil})
 	} else {
-		*tokens = append(*tokens, token{tType: Identifier, lexeme: lexeme, literal: nil})
+		*tokens = append(*tokens, Token{Type: Identifier, Lexeme: lexeme, Literal: nil})
 	}
 	return index
 }
 
 // Number handling
-func handleNumber(tokens *[]token, runes *[]rune, currentPosition int) int {
+func handleNumber(tokens *[]Token, runes *[]rune, currentPosition int) int {
 	slice := *runes
-	index := skipUntil(runes, currentPosition + 1, IsNumberEnd)
+	index := skipUntil(runes, currentPosition + 1, isNumberEnd)
 	lexeme := string(slice[currentPosition:index])
 	literal, convError := strconv.ParseFloat(lexeme, 64)
 	if convError != nil {
 		panic("could not parse float")
 	}
-	*tokens = append(*tokens, token{tType: Number, lexeme: lexeme, literal: literal})
+	*tokens = append(*tokens, Token{Type: Number, Lexeme: lexeme, Literal: literal})
 	return index
 }
 
 // String handling
-func handleString(tokens *[]token, runes *[]rune, currentPosition int) (int, error) {
+func handleString(tokens *[]Token, runes *[]rune, currentPosition int) (int, error) {
 	slice := *runes
-	index := skipUntil(runes, currentPosition + 1, IsStringEndOrNewline)
+	index := skipUntil(runes, currentPosition + 1, isStringEndOrNewline)
 	if (index >= len(slice) || slice[index] == '\n') {
 		//lint:ignore ST1005 spec requires capitalized message with period at the end
 		return index, errors.New("Unterminated string.")
 	} else {
 		lexeme, literal := string(slice[currentPosition:index+1]), string(slice[currentPosition+1:index])
-		*tokens = append(*tokens, token{tType: String, lexeme: lexeme, literal: literal})
+		*tokens = append(*tokens, Token{Type: String, Lexeme: lexeme, Literal: literal})
 	}
 	return index, nil
 }
 
 // Single- and double-character token handling
 func handleSingleDoubleCharToken(
-	tokens *[]token, input *[]rune, position int, match rune, tokenIfMatch tokenType, tokenIfNoMatch tokenType,
+	tokens *[]Token, input *[]rune, position int, match rune, tokenIfMatch tokenType, tokenIfNoMatch tokenType,
 ) int {
-	var newToken token;
+	var newToken Token;
 	character := (*input)[position]
 	next, peekError := peek(input, position + 1)
 	if peekError == nil && next == match {
-		newToken = token{tType: tokenIfMatch, lexeme: string(character) + string(next), literal: nil}
+		newToken = Token{Type: tokenIfMatch, Lexeme: string(character) + string(next), Literal: nil}
 	} else {
-		newToken = token{tType: tokenIfNoMatch, lexeme: string(character), literal: nil}
+		newToken = Token{Type: tokenIfNoMatch, Lexeme: string(character), Literal: nil}
 	}
 	*tokens = append(*tokens, newToken)
-	return position + len(newToken.lexeme) - 1
+	return position + len(newToken.Lexeme) - 1
 }
 
 // MARK: Lookahead functions
 
 var (
-	IsNewline            = func(x rune) bool { return x == '\n' }
-	IsStringEndOrNewline = func(x rune) bool { return x == '"' || x == '\n' }
-	IsNumberEnd          = func(x rune) bool { return x != '.' && !unicode.IsDigit(x) }
-	IsIdentifierEnd      = func(x rune) bool { return !unicode.IsLetter(x) && !unicode.IsDigit(x) && x != '_' }
+	isNewline            = func(x rune) bool { return x == '\n' }
+	isStringEndOrNewline = func(x rune) bool { return x == '"' || x == '\n' }
+	isNumberEnd          = func(x rune) bool { return x != '.' && !unicode.IsDigit(x) }
+	isIdentifierEnd      = func(x rune) bool { return !unicode.IsLetter(x) && !unicode.IsDigit(x) && x != '_' }
 )
 // Looks ahead, starting at the specified position, and until a specified condition is fulfiled or the end of input is
 // reached, and returns the position.

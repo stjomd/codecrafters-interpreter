@@ -1,5 +1,10 @@
 package main
 
+import (
+	"fmt"
+	"reflect"
+)
+
 // MARK: - Token types
 
 type tokenType int
@@ -134,7 +139,7 @@ func (tt tokenType) String() string {
 	return "?"
 }
 
-var keywords = map[string]tokenType {
+var Keywords = map[string]tokenType {
 	"and": And,
 	"class": Class,
 	"else": Else,
@@ -153,7 +158,7 @@ var keywords = map[string]tokenType {
 	"while": While,
 }
 
-var singleCharTokens = map[rune]tokenType {
+var SingleCharTokens = map[rune]tokenType {
 	'(': LeftParen,
 	')': RightParen,
 	'{': LeftBrace,
@@ -165,4 +170,27 @@ var singleCharTokens = map[rune]tokenType {
 	'/': Slash,
 	';': Semicolon,
 	'*': Star,
+}
+
+// MARK: - Token
+
+type Token struct {
+	Type tokenType
+	Lexeme string
+	Literal any
+}
+func (token Token) String() string {
+	literalString := ""
+	if (token.Literal == nil) {
+		literalString = "null"
+	} else if reflect.TypeOf(token.Literal).Kind() == reflect.Float64 {
+		// if the underlying type of `literal` is float64, do some custom handling
+		literalString = fmt.Sprintf("%g", token.Literal)
+		if token.Literal == float64(int(token.Literal.(float64))) {
+			literalString = literalString + ".0"
+		}
+	} else {
+		literalString = fmt.Sprintf("%v", token.Literal)
+	}
+	return fmt.Sprintf("%v %v %v", token.Type.String(), token.Lexeme, literalString)
 }
