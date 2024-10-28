@@ -184,13 +184,17 @@ func (token Token) String() string {
 	if (token.Literal == nil) {
 		literalString = "null"
 	} else if reflect.TypeOf(token.Literal).Kind() == reflect.Float64 {
-		// if the underlying type of `literal` is float64, do some custom handling
-		literalString = fmt.Sprintf("%g", token.Literal)
-		if token.Literal == float64(int(token.Literal.(float64))) {
-			literalString = literalString + ".0"
-		}
+		literalString = Float64ToString(token.Literal.(float64))
 	} else {
 		literalString = fmt.Sprintf("%v", token.Literal)
 	}
 	return fmt.Sprintf("%v %v %v", token.Type.String(), token.Lexeme, literalString)
+}
+
+func Float64ToString(number float64) string {
+	literalString := fmt.Sprintf("%g", number)
+	if number == float64(int(number)) {
+		literalString = literalString + ".0"
+	}
+	return literalString
 }

@@ -16,6 +16,8 @@ func (le LiteralExpr) String() string {
 		return "false"
 	case Nil:
 		return "nil"
+	case Number:
+		return Float64ToString(le.value.(float64))
 	}
 	panic("unsupported token type in LiteralExpr.String()")
 }
@@ -30,6 +32,8 @@ func parse(tokens *[]Token) []Expr {
 			expr = append(expr, LiteralExpr{tType: False, value: false})
 		} else if (token.Type == Nil) {
 			expr = append(expr, LiteralExpr{tType: Nil, value: nil})
+		} else if (token.Type == Number) {
+			expr = append(expr, LiteralExpr{tType: Number, value: token.Literal})
 		}
 	}
 	return expr
