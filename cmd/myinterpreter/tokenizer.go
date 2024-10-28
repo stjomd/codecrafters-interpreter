@@ -15,15 +15,15 @@ func tokenize(input *string) ([]Token, []error) {
 	for i := 0; i < len(runes); i++ {
 		char := runes[i]
 		// MARK: Single-character tokens
-		if char == '/' {
-			// comment handling
-			var next, peekError = peek(&runes, i + 1)
-			if peekError == nil && next == '/' {
+		if singleCharTokenType, isSingleCharToken := SingleCharTokens[char]; isSingleCharToken {
+			// handle comments too
+			next, peekError := peek(&runes, i + 1)
+			if peekError == nil && char == '/' && next == '/' {
 				i = skipUntil(&runes, i + 1, isNewline)
 				line++
+			} else {
+				tokens = append(tokens, Token{Type: singleCharTokenType, Lexeme: string(char), Literal: nil})
 			}
-		} else if singleCharTokenType, isSingleCharToken := SingleCharTokens[char]; isSingleCharToken {
-			tokens = append(tokens, Token{Type: singleCharTokenType, Lexeme: string(char), Literal: nil})
 		// MARK: Single- or double-character tokens
 		} else if char == '!' {
 			i = handleSingleDoubleCharToken(&tokens, &runes, i, '=', BangEqual, Bang)
@@ -107,7 +107,7 @@ func handleString(tokens *[]Token, runes *[]rune, currentPosition int) (int, err
 
 // Single- and double-character token handling
 func handleSingleDoubleCharToken(
-	tokens *[]Token, input *[]rune, position int, match rune, tokenIfMatch tokenType, tokenIfNoMatch tokenType,
+	tokens *[]Token, input *[]rune, position int, match rune, tokenIfMatch TokenType, tokenIfNoMatch TokenType,
 ) int {
 	var newToken Token;
 	character := (*input)[position]

@@ -7,10 +7,10 @@ import (
 
 // MARK: - Token types
 
-type tokenType int
+type TokenType int
 const (
 	// Single-character tokens
-	LeftParen tokenType = iota
+	LeftParen TokenType = iota
 	RightParen
 	LeftBrace
 	RightBrace
@@ -55,7 +55,7 @@ const (
 	EOF
 )
 
-func (tt tokenType) String() string {
+func (tt TokenType) String() string {
 	switch tt {
 	case LeftParen:
 		return "LEFT_PAREN"
@@ -139,7 +139,7 @@ func (tt tokenType) String() string {
 	return "?"
 }
 
-var Keywords = map[string]tokenType {
+var Keywords = map[string]TokenType {
 	"and": And,
 	"class": Class,
 	"else": Else,
@@ -158,7 +158,7 @@ var Keywords = map[string]tokenType {
 	"while": While,
 }
 
-var SingleCharTokens = map[rune]tokenType {
+var SingleCharTokens = map[rune]TokenType {
 	'(': LeftParen,
 	')': RightParen,
 	'{': LeftBrace,
@@ -175,7 +175,7 @@ var SingleCharTokens = map[rune]tokenType {
 // MARK: - Token
 
 type Token struct {
-	Type tokenType
+	Type TokenType
 	Lexeme string
 	Literal any
 }

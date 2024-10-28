@@ -13,12 +13,6 @@ func main() {
 	}
 
 	command := os.Args[1]
-
-	if command != "tokenize" {
-		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
-		os.Exit(1)
-	}
-
 	switch command {
 	case "tokenize":
 		input := readFile(os.Args[2])
@@ -32,10 +26,11 @@ func main() {
 // MARK: - Commands
 
 func parseCommand(input *string) {
-	tokens, tokenizeErrors := tokenize(input)
-	parse(&tokens)
-	fmt.Println("%v", tokenizeErrors)
-	fmt.Println("%v", tokens)
+	tokens, _ := tokenize(input)
+	exprs := parse(&tokens)
+	for _, expr := range exprs {
+		fmt.Println(expr)
+	}
 }
 
 func tokenizeCommand(input *string) {
