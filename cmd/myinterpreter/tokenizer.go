@@ -33,11 +33,11 @@ func (token token) String() string {
 
 // MARK: - Tokenizer function
 
-func tokenize(input string) ([]token, []error) {
+func tokenize(input *string) ([]token, []error) {
 	var line uint64 = 1
 	var tokens []token
 	var errs []error
-	runes := []rune(input)
+	runes := []rune(*input)
 	for i := 0; i < len(runes); i++ {
 		char := runes[i]
 		// MARK: Single-character tokens

@@ -25,9 +25,15 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error reading file: %v\n", err)
 		os.Exit(1)
 	}
-	
-	var fileString = string(fileContents)
-	var tokens, tokenizeErrors = tokenize(fileString)
+
+	if command == "tokenize" {
+		tokenizeCommand(&fileContents)
+	}
+}
+
+func tokenizeCommand(fileContents *[]byte) {
+	var fileString = string(*fileContents)
+	var tokens, tokenizeErrors = tokenize(&fileString)
 	if len(tokenizeErrors) > 0 {
 		for _, err := range tokenizeErrors {
 			fmt.Fprintln(os.Stderr, err)
