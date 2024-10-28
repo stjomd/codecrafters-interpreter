@@ -19,21 +19,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	filename := os.Args[2]
-	fileContents, err := os.ReadFile(filename)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading file: %v\n", err)
-		os.Exit(1)
-	}
-
-	if command == "tokenize" {
-		tokenizeCommand(&fileContents)
+	switch command {
+	case "tokenize":
+		input := readFile(os.Args[2])
+		tokenizeCommand(&input)
+	case "parse":
+		input := readFile(os.Args[2])
+		parseCommand(&input)
 	}
 }
 
-func tokenizeCommand(fileContents *[]byte) {
-	var fileString = string(*fileContents)
-	var tokens, tokenizeErrors = tokenize(&fileString)
+// MARK: - Commands
+
+func parseCommand(input *string) {
+	tokens, tokenizeErrors := tokenize(input)
+	parse(&tokens)
+	fmt.Println("%v", tokenizeErrors)
+	fmt.Println("%v", tokens)
+}
+
+func tokenizeCommand(input *string) {
+	tokens, tokenizeErrors := tokenize(input)
 	if len(tokenizeErrors) > 0 {
 		for _, err := range tokenizeErrors {
 			fmt.Fprintln(os.Stderr, err)
@@ -45,4 +51,15 @@ func tokenizeCommand(fileContents *[]byte) {
 	if len(tokenizeErrors) > 0 {
 		os.Exit(65)
 	}
+}
+
+// MARK: - Helpers
+
+func readFile(filename string) string {
+	fileContents, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading file: %v\n", err)
+		os.Exit(1)
+	}
+	return string(fileContents)
 }
