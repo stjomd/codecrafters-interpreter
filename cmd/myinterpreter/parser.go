@@ -1,40 +1,41 @@
 package main
 
+import (
+	"fmt"
+	"reflect"
+)
+
 type Expr interface {
 	String() string
 }
 
 type LiteralExpr struct {
-	tType TokenType
 	value any
 }
 func (le LiteralExpr) String() string {
-	switch le.tType {
-	case True:
-		return "true"
-	case False:
-		return "false"
-	case Nil:
+	if le.value == nil {
 		return "nil"
-	case Number:
+	} else if reflect.TypeOf(le.value).Kind() == reflect.Float64 {
 		return Float64ToString(le.value.(float64))
+	} else {
+		return fmt.Sprint(le.value)
 	}
-	panic("unsupported token type in LiteralExpr.String()")
 }
 
-func parse(tokens *[]Token) []Expr {
-	var expr []Expr
+func parse(tokens *[]Token) Expr {
 	for i := 0; i < len(*tokens); i++ {
 		token := (*tokens)[i]
-		if (token.Type == True) {
-			expr = append(expr, LiteralExpr{tType: True, value: true})
-		} else if (token.Type == False) {
-			expr = append(expr, LiteralExpr{tType: False, value: false})
-		} else if (token.Type == Nil) {
-			expr = append(expr, LiteralExpr{tType: Nil, value: nil})
-		} else if (token.Type == Number) {
-			expr = append(expr, LiteralExpr{tType: Number, value: token.Literal})
+		if token.Type == True {
+			return LiteralExpr{value: true}
+		} else if token.Type == False {
+			return LiteralExpr{value: false}
+		} else if token.Type == Nil {
+			return LiteralExpr{value: nil}
+		} else if token.Type == Number {
+			return LiteralExpr{value: token.Literal}
+		} else if token.Type == String {
+			return LiteralExpr{value: token.Literal}
 		}
 	}
-	return expr
+	panic("?")
 }

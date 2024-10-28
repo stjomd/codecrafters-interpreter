@@ -27,10 +27,8 @@ func main() {
 
 func parseCommand(input *string) {
 	tokens, _ := tokenize(input)
-	exprs := parse(&tokens)
-	for _, expr := range exprs {
-		fmt.Println(expr)
-	}
+	expr := parse(&tokens)
+	fmt.Println(expr)
 }
 
 func tokenizeCommand(input *string) {
