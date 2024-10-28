@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"unicode"
 )
@@ -12,10 +13,22 @@ import (
 type token struct {
 	tType tokenType
 	lexeme string
-	literal string
+	literal any
 }
 func (token token) String() string {
-	return token.tType.String() + " " + token.lexeme + " " + token.literal
+	literalString := ""
+	if (token.literal == nil) {
+		literalString = "null"
+	} else if reflect.TypeOf(token.literal).Kind() == reflect.Float64 {
+		// if the underlying type of `literal` is float64, do some custom handling
+		literalString = fmt.Sprintf("%g", token.literal)
+		if token.literal == float64(int(token.literal.(float64))) {
+			literalString = literalString + ".0"
+		}
+	} else {
+		literalString = fmt.Sprintf("%v", token.literal)
+	}
+	return fmt.Sprintf("%v %v %v", token.tType.String(), token.lexeme, literalString)
 }
 
 // MARK: - Tokenizer function
@@ -36,7 +49,7 @@ func tokenize(input string) ([]token, []error) {
 				line++
 			}
 		} else if singleCharTokenType, isSingleCharToken := singleCharTokens[char]; isSingleCharToken {
-			tokens = append(tokens, token{tType: singleCharTokenType, lexeme: string(char), literal: "null"})
+			tokens = append(tokens, token{tType: singleCharTokenType, lexeme: string(char), literal: nil})
 		// MARK: Single- or double-character tokens
 		} else if char == '!' {
 			i = handleSingleDoubleCharToken(&tokens, &runes, i, '=', BangEqual, Bang)
@@ -70,7 +83,7 @@ func tokenize(input string) ([]token, []error) {
 			errs = append(errs, errors.New(message))
 		}
 	}
-	tokens = append(tokens, token{tType: EOF, lexeme: "", literal: "null"})
+	tokens = append(tokens, token{tType: EOF, lexeme: "", literal: nil})
 
 	return tokens, errs
 }
@@ -84,9 +97,9 @@ func handleIdentifierAndKeyword(tokens *[]token, runes *[]rune, currentPosition 
 	lexeme := string(slice[currentPosition:index])
 	keywordTokenType, presentInKeywords := keywords[lexeme]
 	if presentInKeywords {
-		*tokens = append(*tokens, token{tType: keywordTokenType, lexeme: lexeme, literal: "null"})
+		*tokens = append(*tokens, token{tType: keywordTokenType, lexeme: lexeme, literal: nil})
 	} else {
-		*tokens = append(*tokens, token{tType: Identifier, lexeme: lexeme, literal: "null"})
+		*tokens = append(*tokens, token{tType: Identifier, lexeme: lexeme, literal: nil})
 	}
 	return index
 }
@@ -100,11 +113,7 @@ func handleNumber(tokens *[]token, runes *[]rune, currentPosition int) int {
 	if convError != nil {
 		panic("could not parse float")
 	}
-	stringLiteral := fmt.Sprintf("%g", literal)
-	if literal == float64(int(literal)) {
-		stringLiteral = stringLiteral + ".0"
-	}
-	*tokens = append(*tokens, token{tType: Number, lexeme: lexeme, literal: stringLiteral})
+	*tokens = append(*tokens, token{tType: Number, lexeme: lexeme, literal: literal})
 	return index
 }
 
@@ -130,9 +139,9 @@ func handleSingleDoubleCharToken(
 	character := (*input)[position]
 	next, peekError := peek(input, position + 1)
 	if peekError == nil && next == match {
-		newToken = token{tType: tokenIfMatch, lexeme: string(character) + string(next), literal: "null"}
+		newToken = token{tType: tokenIfMatch, lexeme: string(character) + string(next), literal: nil}
 	} else {
-		newToken = token{tType: tokenIfNoMatch, lexeme: string(character), literal: "null"}
+		newToken = token{tType: tokenIfNoMatch, lexeme: string(character), literal: nil}
 	}
 	*tokens = append(*tokens, newToken)
 	return position + len(newToken.lexeme) - 1

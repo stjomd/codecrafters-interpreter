@@ -5,7 +5,7 @@ package main
 type tokenType int
 const (
 	// Single-character tokens
-	LeftParen = iota
+	LeftParen tokenType = iota
 	RightParen
 	LeftBrace
 	RightBrace
