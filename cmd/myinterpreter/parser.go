@@ -5,6 +5,13 @@ import (
 	"reflect"
 )
 
+func parse(tokens *[]Token) Expr {
+	parser := parser{tokens: tokens, position: 0}
+	return parser.expression()
+}
+
+// MARK: - Expressions
+
 type Expr interface {
 	String() string
 }
@@ -29,9 +36,12 @@ func (ge GroupingExpr) String() string {
 	return fmt.Sprintf("(group %v)", ge.expr)
 }
 
-func parse(tokens *[]Token) Expr {
-	parser := parser{tokens: tokens, position: 0}
-	return parser.expression()
+type UnaryExpr struct {
+	operation Token
+	expr Expr
+}
+func (ue UnaryExpr) String() string {
+	return fmt.Sprintf("(%v %v)", ue.operation.Lexeme, ue.expr)
 }
 
 // MARK: - Parser methods
@@ -39,6 +49,17 @@ func parse(tokens *[]Token) Expr {
 type parser struct {
 	tokens *[]Token
 	position int
+}
+
+func (p *parser) unary() UnaryExpr {
+	if p.check(Bang) {
+		token := p.consume(Bang)
+		return UnaryExpr{operation: token, expr: p.expression()}
+	} else if p.check(Minus) {
+		token := p.consume(Minus)
+		return UnaryExpr{operation: token, expr: p.expression()}
+	}
+	panic("unexp unary")
 }
 
 func (p *parser) grouping() GroupingExpr {
@@ -70,6 +91,8 @@ func (p *parser) literal() LiteralExpr {
 func (p *parser) expression() Expr {
 	if p.check(LeftParen) {
 		return p.grouping()
+	} else if p.check(Bang) || p.check(Minus) {
+		return p.unary()
 	} else {
 		return p.literal()
 	}
@@ -84,6 +107,8 @@ func (p *parser) match(tokenTypes ...TokenType) bool {
 	}
 	return false;
 }
+
+// MARK: Helpers
 
 func (p *parser) check(tokenType TokenType) bool {
 	if (*p.tokens)[p.position].Type == EOF {
