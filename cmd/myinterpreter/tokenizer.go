@@ -22,30 +22,30 @@ func tokenize(input *string) ([]Token, []error) {
 				i = skipUntil(&runes, i + 1, isNewline)
 				line++
 			} else {
-				tokens = append(tokens, Token{Type: singleCharTokenType, Lexeme: string(char), Literal: nil})
+				tokens = append(tokens, Token{Type: singleCharTokenType, Lexeme: string(char), Literal: nil, Line: line})
 			}
 		// MARK: Single- or double-character tokens
 		} else if char == '!' {
-			i = handleSingleDoubleCharToken(&tokens, &runes, i, '=', BangEqual, Bang)
+			i = handleSingleDoubleCharToken(&tokens, &runes, i, line, '=', BangEqual, Bang)
 		} else if char == '=' {
-			i = handleSingleDoubleCharToken(&tokens, &runes, i, '=', EqualEqual, Equal)
+			i = handleSingleDoubleCharToken(&tokens, &runes, i, line, '=', EqualEqual, Equal)
 		} else if char == '>' {
-			i = handleSingleDoubleCharToken(&tokens, &runes, i, '=', GreaterEqual, Greater)
+			i = handleSingleDoubleCharToken(&tokens, &runes, i, line, '=', GreaterEqual, Greater)
 		} else if char == '<' {
-			i = handleSingleDoubleCharToken(&tokens, &runes, i, '=', LessEqual, Less)
+			i = handleSingleDoubleCharToken(&tokens, &runes, i, line, '=', LessEqual, Less)
 		// MARK: Literals
 		} else if char == '"' {
-			index, err := handleString(&tokens, &runes, i)
+			index, err := handleString(&tokens, &runes, i, line)
 			if err != nil {
 				message := fmt.Sprintf("[line %v] Error: %s", line, err.Error())
 				errs = append(errs, errors.New(message))
 			}
 			i = index
 		} else if unicode.IsDigit(char) {
-			index := handleNumber(&tokens, &runes, i)
+			index := handleNumber(&tokens, &runes, i, line)
 			i = index - 1
 		} else if unicode.IsLetter(char) || char == '_' {
-			index := handleIdentifierAndKeyword(&tokens, &runes, i)
+			index := handleIdentifierAndKeyword(&tokens, &runes, i, line)
 			i = index - 1
 		// MARK: Miscellaneous
 		} else if char == '\n' {
@@ -57,7 +57,7 @@ func tokenize(input *string) ([]Token, []error) {
 			errs = append(errs, errors.New(message))
 		}
 	}
-	tokens = append(tokens, Token{Type: EOF, Lexeme: "", Literal: nil})
+	tokens = append(tokens, Token{Type: EOF, Lexeme: "", Literal: nil, Line: line})
 
 	return tokens, errs
 }
@@ -65,21 +65,21 @@ func tokenize(input *string) ([]Token, []error) {
 // MARK: - Helper functions
 
 // Identifier handling
-func handleIdentifierAndKeyword(tokens *[]Token, runes *[]rune, currentPosition int) int {
+func handleIdentifierAndKeyword(tokens *[]Token, runes *[]rune, currentPosition int, line uint64) int {
 	slice := *runes
 	index := skipUntil(runes, currentPosition + 1, isIdentifierEnd)
 	lexeme := string(slice[currentPosition:index])
 	keywordTokenType, presentInKeywords := Keywords[lexeme]
 	if presentInKeywords {
-		*tokens = append(*tokens, Token{Type: keywordTokenType, Lexeme: lexeme, Literal: nil})
+		*tokens = append(*tokens, Token{Type: keywordTokenType, Lexeme: lexeme, Literal: nil, Line: line})
 	} else {
-		*tokens = append(*tokens, Token{Type: Identifier, Lexeme: lexeme, Literal: nil})
+		*tokens = append(*tokens, Token{Type: Identifier, Lexeme: lexeme, Literal: nil, Line: line})
 	}
 	return index
 }
 
 // Number handling
-func handleNumber(tokens *[]Token, runes *[]rune, currentPosition int) int {
+func handleNumber(tokens *[]Token, runes *[]rune, currentPosition int, line uint64) int {
 	slice := *runes
 	index := skipUntil(runes, currentPosition + 1, isNumberEnd)
 	lexeme := string(slice[currentPosition:index])
@@ -87,12 +87,12 @@ func handleNumber(tokens *[]Token, runes *[]rune, currentPosition int) int {
 	if convError != nil {
 		panic("could not parse float")
 	}
-	*tokens = append(*tokens, Token{Type: Number, Lexeme: lexeme, Literal: literal})
+	*tokens = append(*tokens, Token{Type: Number, Lexeme: lexeme, Literal: literal, Line: line})
 	return index
 }
 
 // String handling
-func handleString(tokens *[]Token, runes *[]rune, currentPosition int) (int, error) {
+func handleString(tokens *[]Token, runes *[]rune, currentPosition int, line uint64) (int, error) {
 	slice := *runes
 	index := skipUntil(runes, currentPosition + 1, isStringEndOrNewline)
 	if (index >= len(slice) || slice[index] == '\n') {
@@ -100,22 +100,23 @@ func handleString(tokens *[]Token, runes *[]rune, currentPosition int) (int, err
 		return index, errors.New("Unterminated string.")
 	} else {
 		lexeme, literal := string(slice[currentPosition:index+1]), string(slice[currentPosition+1:index])
-		*tokens = append(*tokens, Token{Type: String, Lexeme: lexeme, Literal: literal})
+		*tokens = append(*tokens, Token{Type: String, Lexeme: lexeme, Literal: literal, Line: line})
 	}
 	return index, nil
 }
 
 // Single- and double-character token handling
 func handleSingleDoubleCharToken(
-	tokens *[]Token, input *[]rune, position int, match rune, tokenIfMatch TokenType, tokenIfNoMatch TokenType,
+	tokens *[]Token, input *[]rune, position int, line uint64,
+	match rune, tokenIfMatch TokenType, tokenIfNoMatch TokenType,
 ) int {
 	var newToken Token;
 	character := (*input)[position]
 	next, peekError := peek(input, position + 1)
 	if peekError == nil && next == match {
-		newToken = Token{Type: tokenIfMatch, Lexeme: string(character) + string(next), Literal: nil}
+		newToken = Token{Type: tokenIfMatch, Lexeme: string(character) + string(next), Literal: nil, Line: line}
 	} else {
-		newToken = Token{Type: tokenIfNoMatch, Lexeme: string(character), Literal: nil}
+		newToken = Token{Type: tokenIfNoMatch, Lexeme: string(character), Literal: nil, Line: line}
 	}
 	*tokens = append(*tokens, newToken)
 	return position + len(newToken.Lexeme) - 1

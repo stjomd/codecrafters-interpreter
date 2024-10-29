@@ -1,12 +1,18 @@
 package main
 
-func parse(tokens *[]Token) Expr {
+import (
+	"fmt"
+	"os"
+)
+
+func parse(tokens *[]Token) (Expr, []error) {
 	parser := parser{tokens: tokens, position: 0}
-	return parser.expression()
+	return parser.expression(), parser.errors
 }
 
 type parser struct {
 	tokens *[]Token
+	errors []error
 	position int
 }
 
@@ -79,7 +85,11 @@ func (p *parser) primary() Expr {
 		p.consume(RightParen)
 		return GroupingExpr{expr: expr}
 	}
-	panic("unexp literal: " + p.peek().String())
+	// Wrongful state
+	token := p.peek()
+	fmt.Fprintf(os.Stderr, "[line %d] Error at '%v': Expect expression.\n", token.Line, token.Lexeme)
+	os.Exit(65)
+	panic("!")
 }
 
 // MARK: - Helpers

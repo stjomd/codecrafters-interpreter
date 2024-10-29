@@ -27,8 +27,14 @@ func main() {
 
 func parseCommand(input *string) {
 	tokens, _ := tokenize(input)
-	expr := parse(&tokens)
+	expr, errors := parse(&tokens)
 	fmt.Println(expr)
+	if len(errors) > 0 {
+		for _, err := range errors {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		os.Exit(65)
+	}
 }
 
 func tokenizeCommand(input *string) {
