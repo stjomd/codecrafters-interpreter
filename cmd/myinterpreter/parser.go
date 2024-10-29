@@ -44,13 +44,13 @@ func (ue UnaryExpr) String() string {
 	return fmt.Sprintf("(%v %v)", ue.operation.Lexeme, ue.expr)
 }
 
-type FactorExpr struct {
+type BinaryExpr struct {
 	left Expr
 	operation Token
 	right Expr
 }
-func (fe FactorExpr) String() string {
-	return fmt.Sprintf("(%v %v %v)", fe.operation.Lexeme, fe.left, fe.right)
+func (be BinaryExpr) String() string {
+	return fmt.Sprintf("(%v %v %v)", be.operation.Lexeme, be.left, be.right)
 }
 
 // MARK: - Parser methods
@@ -60,12 +60,22 @@ type parser struct {
 	position int
 }
 
+func (p *parser) term() Expr {
+	var expr Expr = p.factor()
+	for p.match(Plus, Minus) {
+		operation := p.previous()
+		right := p.factor()
+		expr = BinaryExpr{left: expr, operation: operation, right: right}
+	}
+	return expr
+}
+
 func (p *parser) factor() Expr {
 	var expr Expr = p.unary()
 	for p.match(Slash, Star) {
 		operation := p.previous()
 		right := p.unary()
-		expr = FactorExpr{left: expr, operation: operation, right: right}
+		expr = BinaryExpr{left: expr, operation: operation, right: right}
 	}
 	return expr
 }
@@ -75,9 +85,8 @@ func (p *parser) unary() Expr {
 		operation := p.previous()
 		expr := p.unary()
 		return UnaryExpr{operation: operation, expr: expr}
-	} else {
-		return p.primary() // wrong?
 	}
+	return p.primary()
 }
 
 func (p *parser) primary() Expr {
@@ -98,7 +107,7 @@ func (p *parser) primary() Expr {
 }
 
 func (p *parser) expression() Expr {
-	return p.factor()
+	return p.term()
 }
 
 // MARK: Helpers
