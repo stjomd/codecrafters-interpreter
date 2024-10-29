@@ -44,6 +44,15 @@ func (ue UnaryExpr) String() string {
 	return fmt.Sprintf("(%v %v)", ue.operation.Lexeme, ue.expr)
 }
 
+type FactorExpr struct {
+	left Expr
+	operation Token
+	right Expr
+}
+func (fe FactorExpr) String() string {
+	return fmt.Sprintf("(%v %v %v)", fe.operation.Lexeme, fe.left, fe.right)
+}
+
 // MARK: - Parser methods
 
 type parser struct {
@@ -51,52 +60,48 @@ type parser struct {
 	position int
 }
 
-func (p *parser) unary() UnaryExpr {
-	if p.check(Bang) {
-		token := p.consume(Bang)
-		return UnaryExpr{operation: token, expr: p.expression()}
-	} else if p.check(Minus) {
-		token := p.consume(Minus)
-		return UnaryExpr{operation: token, expr: p.expression()}
+func (p *parser) factor() Expr {
+	var expr Expr = p.unary()
+	for p.match(Slash, Star) {
+		operation := p.previous()
+		right := p.unary()
+		expr = FactorExpr{left: expr, operation: operation, right: right}
 	}
-	panic("unexp unary")
+	return expr
 }
 
-func (p *parser) grouping() GroupingExpr {
-	if p.match(LeftParen) {
+func (p *parser) unary() Expr {
+	if p.match(Bang, Minus) {
+		operation := p.previous()
+		expr := p.unary()
+		return UnaryExpr{operation: operation, expr: expr}
+	} else {
+		return p.primary() // wrong?
+	}
+}
+
+func (p *parser) primary() Expr {
+	if p.match(True) {
+		return LiteralExpr{value: true}
+	} else if p.match(False) {
+		return LiteralExpr{value: false}
+	} else if p.match(Nil) {
+		return LiteralExpr{value: nil}
+	} else if p.match(Number, String) {
+		return LiteralExpr{value: p.previous().Literal}
+	} else if p.match(LeftParen) {
 		expr := p.expression()
 		p.consume(RightParen)
 		return GroupingExpr{expr: expr}
 	}
-	panic("?!?!?")
-}
-
-func (p *parser) literal() LiteralExpr {
-	token := (*p.tokens)[p.position]
-	p.position += 1
-	if token.Type == True {
-		return LiteralExpr{value: true}
-	} else if token.Type == False {
-		return LiteralExpr{value: false}
-	} else if token.Type == Nil {
-		return LiteralExpr{value: nil}
-	} else if token.Type == Number {
-		return LiteralExpr{value: token.Literal}
-	} else if token.Type == String {
-		return LiteralExpr{value: token.Literal}
-	}
-	panic("! literal")
+	panic("unexp literal: " + p.peek().String())
 }
 
 func (p *parser) expression() Expr {
-	if p.check(LeftParen) {
-		return p.grouping()
-	} else if p.check(Bang) || p.check(Minus) {
-		return p.unary()
-	} else {
-		return p.literal()
-	}
+	return p.factor()
 }
+
+// MARK: Helpers
 
 func (p *parser) match(tokenTypes ...TokenType) bool {
 	for _, tokenType := range tokenTypes {
@@ -108,20 +113,18 @@ func (p *parser) match(tokenTypes ...TokenType) bool {
 	return false;
 }
 
-// MARK: Helpers
-
 func (p *parser) check(tokenType TokenType) bool {
-	if (*p.tokens)[p.position].Type == EOF {
+	if p.peek().Type == EOF {
 		return false
 	}
-	return (*p.tokens)[p.position].Type == tokenType
+	return p.peek().Type == tokenType
 }
 
 func (p *parser) advance() Token {
-	if (*p.tokens)[p.position].Type != EOF {
+	if p.peek().Type != EOF {
 		p.position += 1
 	}
-	return (*p.tokens)[p.position - 1]
+	return p.previous()
 }
 
 func (p *parser) consume(tokenType TokenType) Token {
@@ -129,4 +132,12 @@ func (p *parser) consume(tokenType TokenType) Token {
 		return p.advance()
 	}
 	panic("unexp")
+}
+
+func (p *parser) peek() Token {
+	return (*p.tokens)[p.position]
+}
+
+func (p *parser) previous() Token {
+	return (*p.tokens)[p.position - 1]
 }
