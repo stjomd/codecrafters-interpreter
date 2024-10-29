@@ -30,27 +30,29 @@ func (ge GroupingExpr) String() string {
 }
 
 func parse(tokens *[]Token) Expr {
-	scanner := scanner{tokens: tokens, position: 0}
-	return expression(&scanner)
+	parser := parser{tokens: tokens, position: 0}
+	return parser.expression()
 }
 
-type scanner struct {
+// MARK: - Parser methods
+
+type parser struct {
 	tokens *[]Token
 	position int
 }
 
-func grouping(scanner *scanner) GroupingExpr {
-	if match(scanner, LeftParen) {
-		expr := expression(scanner)
-		consume(scanner, RightParen)
+func (p *parser) grouping() GroupingExpr {
+	if p.match(LeftParen) {
+		expr := p.expression()
+		p.consume(RightParen)
 		return GroupingExpr{expr: expr}
 	}
 	panic("?!?!?")
 }
 
-func literal(scanner *scanner) LiteralExpr {
-	token := (*scanner.tokens)[scanner.position]
-	scanner.position += 1
+func (p *parser) literal() LiteralExpr {
+	token := (*p.tokens)[p.position]
+	p.position += 1
 	if token.Type == True {
 		return LiteralExpr{value: true}
 	} else if token.Type == False {
@@ -65,41 +67,41 @@ func literal(scanner *scanner) LiteralExpr {
 	panic("! literal")
 }
 
-func expression(scanner *scanner) Expr {
-	if check(scanner, LeftParen) {
-		return grouping(scanner)
+func (p *parser) expression() Expr {
+	if p.check(LeftParen) {
+		return p.grouping()
 	} else {
-		return literal(scanner)
+		return p.literal()
 	}
 }
 
-func match(scanner *scanner, tokenTypes ...TokenType) bool {
+func (p *parser) match(tokenTypes ...TokenType) bool {
 	for _, tokenType := range tokenTypes {
-		if check(scanner, tokenType) {
-			advance(scanner)
+		if p.check(tokenType) {
+			p.advance()
 			return true;
 		}
 	}
 	return false;
 }
 
-func check(scanner *scanner, tokenType TokenType) bool {
-	if (*scanner.tokens)[scanner.position].Type == EOF {
+func (p *parser) check(tokenType TokenType) bool {
+	if (*p.tokens)[p.position].Type == EOF {
 		return false
 	}
-	return (*scanner.tokens)[scanner.position].Type == tokenType
+	return (*p.tokens)[p.position].Type == tokenType
 }
 
-func advance(scanner *scanner) Token {
-	if (*scanner.tokens)[scanner.position].Type != EOF {
-		scanner.position += 1
+func (p *parser) advance() Token {
+	if (*p.tokens)[p.position].Type != EOF {
+		p.position += 1
 	}
-	return (*scanner.tokens)[scanner.position - 1]
+	return (*p.tokens)[p.position - 1]
 }
 
-func consume(scanner *scanner, tokenType TokenType) Token {
-	if check(scanner, tokenType) {
-		return advance(scanner)
+func (p *parser) consume(tokenType TokenType) Token {
+	if p.check(tokenType) {
+		return p.advance()
 	}
 	panic("unexp")
 }
