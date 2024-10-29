@@ -60,6 +60,16 @@ type parser struct {
 	position int
 }
 
+func (p *parser) comparison() Expr {
+	var expr Expr = p.term()
+	for p.match(Less, LessEqual, Greater, GreaterEqual) {
+		operation := p.previous()
+		right := p.term()
+		expr = BinaryExpr{left: expr, operation: operation, right: right}
+	}
+	return expr
+}
+
 func (p *parser) term() Expr {
 	var expr Expr = p.factor()
 	for p.match(Plus, Minus) {
@@ -107,7 +117,7 @@ func (p *parser) primary() Expr {
 }
 
 func (p *parser) expression() Expr {
-	return p.term()
+	return p.comparison()
 }
 
 // MARK: Helpers
