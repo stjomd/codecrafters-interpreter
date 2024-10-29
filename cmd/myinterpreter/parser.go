@@ -10,7 +10,21 @@ type parser struct {
 	position int
 }
 
-// MARK: - Parser methods
+// MARK: - Grammar rules
+
+func (p *parser) expression() Expr {
+	return p.equality()
+}
+
+func (p *parser) equality() Expr {
+	var expr Expr = p.comparison()
+	for p.match(EqualEqual, BangEqual) {
+		operation := p.previous()
+		right := p.comparison()
+		expr = BinaryExpr{left: expr, operation: operation, right: right}
+	}
+	return expr
+}
 
 func (p *parser) comparison() Expr {
 	var expr Expr = p.term()
@@ -68,11 +82,7 @@ func (p *parser) primary() Expr {
 	panic("unexp literal: " + p.peek().String())
 }
 
-func (p *parser) expression() Expr {
-	return p.comparison()
-}
-
-// MARK: Helpers
+// MARK: - Helpers
 
 func (p *parser) match(tokenTypes ...TokenType) bool {
 	for _, tokenType := range tokenTypes {
