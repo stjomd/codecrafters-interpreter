@@ -35,7 +35,7 @@ func (ge GroupingExpr) String() string {
 	return fmt.Sprintf("(group %v)", ge.expr)
 }
 func (ge GroupingExpr) Eval() any {
-	panic("!")
+	return ge.expr.Eval()
 }
 
 type UnaryExpr struct {
