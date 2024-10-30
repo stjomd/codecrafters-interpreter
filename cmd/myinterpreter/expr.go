@@ -101,12 +101,24 @@ func (be BinaryExpr) Eval() (any, error) {
 		}
 		return nil, runtimeError("Operands must be two numbers or two strings.", be.operation.Line)
 	case Less:
+		if !isNumber(leftValue) || !isNumber(rightValue) {
+			return nil, runtimeError("Operands must be numbers.", be.operation.Line)
+		}
 		return leftValue.(float64) < rightValue.(float64), nil
 	case LessEqual:
+		if !isNumber(leftValue) || !isNumber(rightValue) {
+			return nil, runtimeError("Operands must be numbers.", be.operation.Line)
+		}
 		return leftValue.(float64) <= rightValue.(float64), nil
 	case Greater:
+		if !isNumber(leftValue) || !isNumber(rightValue) {
+			return nil, runtimeError("Operands must be numbers.", be.operation.Line)
+		}
 		return leftValue.(float64) > rightValue.(float64), nil
 	case GreaterEqual:
+		if !isNumber(leftValue) || !isNumber(rightValue) {
+			return nil, runtimeError("Operands must be numbers.", be.operation.Line)
+		}
 		return leftValue.(float64) >= rightValue.(float64), nil
 	case EqualEqual:
 		return isEqual(leftValue, rightValue), nil
