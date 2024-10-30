@@ -1,9 +1,18 @@
 package main
 
-import "reflect"
+import (
+	"errors"
+	"fmt"
+	"reflect"
+)
 
 func evaluate(expr Expr) (any, error) {
 	return expr.Eval()
+}
+
+func runtimeError(message string, line uint64) error {
+	errorMessage := fmt.Sprintf("%s\n[line %d]", message, line)
+	return errors.New(errorMessage)
 }
 
 func isTruthy(value any) bool {

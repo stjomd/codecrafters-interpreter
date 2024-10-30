@@ -53,6 +53,9 @@ func (ue UnaryExpr) Eval() (any, error) {
 	case Bang:
 		return !isTruthy(subvalue), nil
 	case Minus:
+		if !isNumber(subvalue) {
+			return nil, runtimeError("Operand must be a number.", ue.operation.Line)
+		}
 		return -subvalue.(float64), nil
 	}
 
