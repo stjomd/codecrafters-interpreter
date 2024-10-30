@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/codecrafters-io/interpreter-starter-go/scan"
 )
 
 // MARK: - Eval() implementations
@@ -21,9 +23,9 @@ func (ue UnaryExpr) Eval() (any, error) {
 	if suberror != nil { return nil, suberror }
 
 	switch ue.operation.Type {
-	case Bang:
+	case scan.Bang:
 		return !isTruthy(subvalue), nil
-	case Minus:
+	case scan.Minus:
 		if !isNumber(subvalue) {
 			return nil, runtimeError("Operand must be a number.", ue.operation.Line)
 		}
@@ -41,22 +43,22 @@ func (be BinaryExpr) Eval() (any, error) {
 	if rightError != nil { return nil, rightError }
 
 	switch be.operation.Type {
-	case Star:
+	case scan.Star:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
 			return nil, runtimeErrorMustBeNumbers(be.operation.Line)
 		}
 		return leftValue.(float64) * rightValue.(float64), nil
-	case Slash:
+	case scan.Slash:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
 			return nil, runtimeErrorMustBeNumbers(be.operation.Line)
 		}
 		return leftValue.(float64) / rightValue.(float64), nil
-	case Minus:
+	case scan.Minus:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
 			return nil, runtimeErrorMustBeNumbers(be.operation.Line)
 		}
 		return leftValue.(float64) - rightValue.(float64), nil
-	case Plus:
+	case scan.Plus:
 		if isNumber(leftValue) && isNumber(rightValue) {
 			return leftValue.(float64) + rightValue.(float64), nil
 		}
@@ -64,29 +66,29 @@ func (be BinaryExpr) Eval() (any, error) {
 			return leftValue.(string) + rightValue.(string), nil
 		}
 		return nil, runtimeError("Operands must be two numbers or two strings.", be.operation.Line)
-	case Less:
+	case scan.Less:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
 			return nil, runtimeErrorMustBeNumbers(be.operation.Line)
 		}
 		return leftValue.(float64) < rightValue.(float64), nil
-	case LessEqual:
+	case scan.LessEqual:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
 			return nil, runtimeErrorMustBeNumbers(be.operation.Line)
 		}
 		return leftValue.(float64) <= rightValue.(float64), nil
-	case Greater:
+	case scan.Greater:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
 			return nil, runtimeErrorMustBeNumbers(be.operation.Line)
 		}
 		return leftValue.(float64) > rightValue.(float64), nil
-	case GreaterEqual:
+	case scan.GreaterEqual:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
 			return nil, runtimeErrorMustBeNumbers(be.operation.Line)
 		}
 		return leftValue.(float64) >= rightValue.(float64), nil
-	case EqualEqual:
+	case scan.EqualEqual:
 		return isEqual(leftValue, rightValue), nil
-	case BangEqual:
+	case scan.BangEqual:
 		return !isEqual(leftValue, rightValue), nil
 	}
 

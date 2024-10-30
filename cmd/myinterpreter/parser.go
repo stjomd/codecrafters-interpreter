@@ -3,15 +3,17 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/codecrafters-io/interpreter-starter-go/scan"
 )
 
-func parse(tokens *[]Token) Expr {
+func parse(tokens *[]scan.Token) Expr {
 	parser := parser{tokens: tokens, position: 0}
 	return parser.expression()
 }
 
 type parser struct {
-	tokens *[]Token
+	tokens *[]scan.Token
 	position int
 }
 
@@ -23,7 +25,7 @@ func (p *parser) expression() Expr {
 
 func (p *parser) equality() Expr {
 	var expr Expr = p.comparison()
-	for p.match(EqualEqual, BangEqual) {
+	for p.match(scan.EqualEqual, scan.BangEqual) {
 		operation := p.previous()
 		right := p.comparison()
 		expr = BinaryExpr{left: expr, operation: operation, right: right}
@@ -33,7 +35,7 @@ func (p *parser) equality() Expr {
 
 func (p *parser) comparison() Expr {
 	var expr Expr = p.term()
-	for p.match(Less, LessEqual, Greater, GreaterEqual) {
+	for p.match(scan.Less, scan.LessEqual, scan.Greater, scan.GreaterEqual) {
 		operation := p.previous()
 		right := p.term()
 		expr = BinaryExpr{left: expr, operation: operation, right: right}
@@ -43,7 +45,7 @@ func (p *parser) comparison() Expr {
 
 func (p *parser) term() Expr {
 	var expr Expr = p.factor()
-	for p.match(Plus, Minus) {
+	for p.match(scan.Plus, scan.Minus) {
 		operation := p.previous()
 		right := p.factor()
 		expr = BinaryExpr{left: expr, operation: operation, right: right}
@@ -53,7 +55,7 @@ func (p *parser) term() Expr {
 
 func (p *parser) factor() Expr {
 	var expr Expr = p.unary()
-	for p.match(Slash, Star) {
+	for p.match(scan.Slash, scan.Star) {
 		operation := p.previous()
 		right := p.unary()
 		expr = BinaryExpr{left: expr, operation: operation, right: right}
@@ -62,7 +64,7 @@ func (p *parser) factor() Expr {
 }
 
 func (p *parser) unary() Expr {
-	if p.match(Bang, Minus) {
+	if p.match(scan.Bang, scan.Minus) {
 		operation := p.previous()
 		expr := p.unary()
 		return UnaryExpr{operation: operation, expr: expr}
@@ -71,17 +73,17 @@ func (p *parser) unary() Expr {
 }
 
 func (p *parser) primary() Expr {
-	if p.match(True) {
+	if p.match(scan.True) {
 		return LiteralExpr{value: true}
-	} else if p.match(False) {
+	} else if p.match(scan.False) {
 		return LiteralExpr{value: false}
-	} else if p.match(Nil) {
+	} else if p.match(scan.Nil) {
 		return LiteralExpr{value: nil}
-	} else if p.match(Number, String) {
+	} else if p.match(scan.Number, scan.String) {
 		return LiteralExpr{value: p.previous().Literal}
-	} else if p.match(LeftParen) {
+	} else if p.match(scan.LeftParen) {
 		expr := p.expression()
-		p.consume(RightParen, "Expect ')'")
+		p.consume(scan.RightParen, "Expect ')'")
 		return GroupingExpr{expr: expr}
 	}
 	// Wrongful state
@@ -92,7 +94,7 @@ func (p *parser) primary() Expr {
 
 // MARK: - Helpers
 
-func (p *parser) match(tokenTypes ...TokenType) bool {
+func (p *parser) match(tokenTypes ...scan.TokenType) bool {
 	for _, tokenType := range tokenTypes {
 		if p.check(tokenType) {
 			p.advance()
@@ -102,21 +104,21 @@ func (p *parser) match(tokenTypes ...TokenType) bool {
 	return false;
 }
 
-func (p *parser) check(tokenType TokenType) bool {
-	if p.peek().Type == EOF {
+func (p *parser) check(tokenType scan.TokenType) bool {
+	if p.peek().Type == scan.EOF {
 		return false
 	}
 	return p.peek().Type == tokenType
 }
 
-func (p *parser) advance() Token {
-	if p.peek().Type != EOF {
+func (p *parser) advance() scan.Token {
+	if p.peek().Type != scan.EOF {
 		p.position += 1
 	}
 	return p.previous()
 }
 
-func (p *parser) consume(tokenType TokenType, errorMessage string) Token {
+func (p *parser) consume(tokenType scan.TokenType, errorMessage string) scan.Token {
 	if p.check(tokenType) {
 		return p.advance()
 	}
@@ -125,10 +127,10 @@ func (p *parser) consume(tokenType TokenType, errorMessage string) Token {
 	panic("!")
 }
 
-func (p *parser) peek() Token {
+func (p *parser) peek() scan.Token {
 	return (*p.tokens)[p.position]
 }
 
-func (p *parser) previous() Token {
+func (p *parser) previous() scan.Token {
 	return (*p.tokens)[p.position - 1]
 }

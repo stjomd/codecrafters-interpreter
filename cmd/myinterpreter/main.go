@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/codecrafters-io/interpreter-starter-go/scan"
 )
 
 func main() {
@@ -31,7 +33,7 @@ func main() {
 // MARK: - Commands
 
 func evaluateCommand(input *string) {
-	tokens, _ := tokenize(input)
+	tokens, _ := scan.Tokenize(input)
 	expr := parse(&tokens)
 	value, evalError := expr.Eval()
 
@@ -48,13 +50,13 @@ func evaluateCommand(input *string) {
 }
 
 func parseCommand(input *string) {
-	tokens, _ := tokenize(input)
+	tokens, _ := scan.Tokenize(input)
 	expr := parse(&tokens)
 	fmt.Println(expr)
 }
 
 func tokenizeCommand(input *string) {
-	tokens, tokenizeErrors := tokenize(input)
+	tokens, tokenizeErrors := scan.Tokenize(input)
 	if len(tokenizeErrors) > 0 {
 		for _, err := range tokenizeErrors {
 			fmt.Fprintln(os.Stderr, err)

@@ -1,4 +1,4 @@
-package main
+package scan
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 	"unicode"
 )
 
-func tokenize(input *string) ([]Token, []error) {
+func Tokenize(input *string) ([]Token, []error) {
 	var line uint64 = 1
 	var tokens []Token
 	var errs []error
@@ -15,7 +15,7 @@ func tokenize(input *string) ([]Token, []error) {
 	for i := 0; i < len(runes); i++ {
 		char := runes[i]
 		// MARK: Single-character tokens
-		if singleCharTokenType, isSingleCharToken := SingleCharTokens[char]; isSingleCharToken {
+		if singleCharTokenType, isSingleCharToken := singleCharTokens[char]; isSingleCharToken {
 			// handle comments too
 			next, peekError := peek(&runes, i + 1)
 			if peekError == nil && char == '/' && next == '/' {
@@ -69,7 +69,7 @@ func handleIdentifierAndKeyword(tokens *[]Token, runes *[]rune, currentPosition 
 	slice := *runes
 	index := skipUntil(runes, currentPosition + 1, isIdentifierEnd)
 	lexeme := string(slice[currentPosition:index])
-	keywordTokenType, presentInKeywords := Keywords[lexeme]
+	keywordTokenType, presentInKeywords := keywords[lexeme]
 	if presentInKeywords {
 		*tokens = append(*tokens, Token{Type: keywordTokenType, Lexeme: lexeme, Literal: nil, Line: line})
 	} else {

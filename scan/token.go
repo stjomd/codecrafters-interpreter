@@ -1,4 +1,4 @@
-package main
+package scan
 
 import (
 	"fmt"
@@ -139,7 +139,7 @@ func (tt TokenType) String() string {
 	return "?"
 }
 
-var Keywords = map[string]TokenType {
+var keywords = map[string]TokenType {
 	"and": And,
 	"class": Class,
 	"else": Else,
@@ -158,7 +158,7 @@ var Keywords = map[string]TokenType {
 	"while": While,
 }
 
-var SingleCharTokens = map[rune]TokenType {
+var singleCharTokens = map[rune]TokenType {
 	'(': LeftParen,
 	')': RightParen,
 	'{': LeftBrace,

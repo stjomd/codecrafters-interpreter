@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/codecrafters-io/interpreter-starter-go/scan"
 )
 
 // MARK: - Expressions
@@ -19,7 +21,7 @@ func (le LiteralExpr) String() string {
 	if le.value == nil {
 		return "nil"
 	} else if reflect.TypeOf(le.value).Kind() == reflect.Float64 {
-		return Float64ToString(le.value.(float64))
+		return scan.Float64ToString(le.value.(float64))
 	} else {
 		return fmt.Sprint(le.value)
 	}
@@ -33,7 +35,7 @@ func (ge GroupingExpr) String() string {
 }
 
 type UnaryExpr struct {
-	operation Token
+	operation scan.Token
 	expr Expr
 }
 func (ue UnaryExpr) String() string {
@@ -42,7 +44,7 @@ func (ue UnaryExpr) String() string {
 
 type BinaryExpr struct {
 	left Expr
-	operation Token
+	operation scan.Token
 	right Expr
 }
 func (be BinaryExpr) String() string {
