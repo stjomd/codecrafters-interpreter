@@ -1,4 +1,4 @@
-package main
+package parse
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/codecrafters-io/interpreter-starter-go/scan"
 )
 
-func parse(tokens *[]scan.Token) Expr {
+func Parse(tokens *[]scan.Token) Expr {
 	parser := parser{tokens: tokens, position: 0}
 	return parser.expression()
 }

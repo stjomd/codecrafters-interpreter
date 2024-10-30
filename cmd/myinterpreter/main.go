@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/codecrafters-io/interpreter-starter-go/parse"
 	"github.com/codecrafters-io/interpreter-starter-go/scan"
 )
 
@@ -34,7 +35,7 @@ func main() {
 
 func evaluateCommand(input *string) {
 	tokens, _ := scan.Tokenize(input)
-	expr := parse(&tokens)
+	expr := parse.Parse(&tokens)
 	value, evalError := expr.Eval()
 
 	if evalError != nil {
@@ -51,7 +52,7 @@ func evaluateCommand(input *string) {
 
 func parseCommand(input *string) {
 	tokens, _ := scan.Tokenize(input)
-	expr := parse(&tokens)
+	expr := parse.Parse(&tokens)
 	fmt.Println(expr)
 }
 
