@@ -6,10 +6,6 @@ import (
 	"reflect"
 )
 
-func evaluate(expr Expr) (any, error) {
-	return expr.Eval()
-}
-
 // MARK: - Eval() implementations
 
 func (le LiteralExpr) Eval() (any, error) {
@@ -47,17 +43,17 @@ func (be BinaryExpr) Eval() (any, error) {
 	switch be.operation.Type {
 	case Star:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeError("Operands must be numbers.", be.operation.Line)
+			return nil, runtimeErrorMustBeNumbers(be.operation.Line)
 		}
 		return leftValue.(float64) * rightValue.(float64), nil
 	case Slash:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeError("Operands must be numbers.", be.operation.Line)
+			return nil, runtimeErrorMustBeNumbers(be.operation.Line)
 		}
 		return leftValue.(float64) / rightValue.(float64), nil
 	case Minus:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeError("Operands must be numbers.", be.operation.Line)
+			return nil, runtimeErrorMustBeNumbers(be.operation.Line)
 		}
 		return leftValue.(float64) - rightValue.(float64), nil
 	case Plus:
@@ -70,22 +66,22 @@ func (be BinaryExpr) Eval() (any, error) {
 		return nil, runtimeError("Operands must be two numbers or two strings.", be.operation.Line)
 	case Less:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeError("Operands must be numbers.", be.operation.Line)
+			return nil, runtimeErrorMustBeNumbers(be.operation.Line)
 		}
 		return leftValue.(float64) < rightValue.(float64), nil
 	case LessEqual:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeError("Operands must be numbers.", be.operation.Line)
+			return nil, runtimeErrorMustBeNumbers(be.operation.Line)
 		}
 		return leftValue.(float64) <= rightValue.(float64), nil
 	case Greater:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeError("Operands must be numbers.", be.operation.Line)
+			return nil, runtimeErrorMustBeNumbers(be.operation.Line)
 		}
 		return leftValue.(float64) > rightValue.(float64), nil
 	case GreaterEqual:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeError("Operands must be numbers.", be.operation.Line)
+			return nil, runtimeErrorMustBeNumbers(be.operation.Line)
 		}
 		return leftValue.(float64) >= rightValue.(float64), nil
 	case EqualEqual:
@@ -100,6 +96,10 @@ func (be BinaryExpr) Eval() (any, error) {
 
 
 // MARK: - Helpers
+
+func runtimeErrorMustBeNumbers(line uint64) error {
+	return runtimeError("Operands must be numbers.", line)
+}
 
 func runtimeError(message string, line uint64) error {
 	errorMessage := fmt.Sprintf("%s\n[line %d]", message, line)
