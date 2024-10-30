@@ -33,8 +33,9 @@ func (ue UnaryExpr) Eval() (any, error) {
 		}
 		return -subvalue.(float64), nil
 	}
-
-	panic("! unary eval")
+	
+	message := fmt.Sprintf("Unexpected type of unary expression: %s.", ue.operation.Type.String())
+	return nil, runtimeError(message, ue.operation.Line)
 }
 
 func (be BinaryExpr) Eval() (any, error) {
@@ -93,7 +94,8 @@ func (be BinaryExpr) Eval() (any, error) {
 		return !isEqual(leftValue, rightValue), nil
 	}
 
-	panic("! binary eval")
+	message := fmt.Sprintf("Unexpected type of binary expression: %s.", be.operation.Type.String())
+	return nil, runtimeError(message, be.operation.Line)
 }
 
 
