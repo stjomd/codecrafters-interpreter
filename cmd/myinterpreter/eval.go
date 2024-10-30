@@ -1,6 +1,8 @@
 package main
 
-func evaluate(expr Expr) any {
+import "reflect"
+
+func evaluate(expr Expr) (any, error) {
 	return expr.Eval()
 }
 
@@ -13,4 +15,12 @@ func isEqual(a any, b any) bool {
 	if a == nil && b == nil { return true }
 	if a == nil { return false }
 	return a == b
+}
+
+func isNumber(value any) bool {
+	return reflect.TypeOf(value).Kind() == reflect.Float64
+}
+
+func isString(value any) bool {
+	return reflect.TypeOf(value).Kind() == reflect.String
 }

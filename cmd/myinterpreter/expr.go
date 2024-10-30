@@ -9,7 +9,7 @@ import (
 
 type Expr interface {
 	String() string
-	Eval() any
+	Eval() (any, error)
 }
 
 type LiteralExpr struct {
@@ -24,8 +24,8 @@ func (le LiteralExpr) String() string {
 		return fmt.Sprint(le.value)
 	}
 }
-func (le LiteralExpr) Eval() any {
-	return le.value
+func (le LiteralExpr) Eval() (any, error) {
+	return le.value, nil
 }
 
 type GroupingExpr struct {
@@ -34,7 +34,7 @@ type GroupingExpr struct {
 func (ge GroupingExpr) String() string {
 	return fmt.Sprintf("(group %v)", ge.expr)
 }
-func (ge GroupingExpr) Eval() any {
+func (ge GroupingExpr) Eval() (any, error) {
 	return ge.expr.Eval()
 }
 
@@ -45,14 +45,17 @@ type UnaryExpr struct {
 func (ue UnaryExpr) String() string {
 	return fmt.Sprintf("(%v %v)", ue.operation.Lexeme, ue.expr)
 }
-func (ue UnaryExpr) Eval() any {
-	subvalue := ue.expr.Eval()
+func (ue UnaryExpr) Eval() (any, error) {
+	subvalue, suberror := ue.expr.Eval()
+	if suberror != nil { return nil, suberror }
+
 	switch ue.operation.Type {
 	case Bang:
-		return !isTruthy(subvalue)
+		return !isTruthy(subvalue), nil
 	case Minus:
-		return -subvalue.(float64)
+		return -subvalue.(float64), nil
 	}
+
 	panic("! unary eval")
 }
 
@@ -64,34 +67,37 @@ type BinaryExpr struct {
 func (be BinaryExpr) String() string {
 	return fmt.Sprintf("(%v %v %v)", be.operation.Lexeme, be.left, be.right)
 }
-func (be BinaryExpr) Eval() any {
-	leftValue, rightValue := be.left.Eval(), be.right.Eval()
+func (be BinaryExpr) Eval() (any, error) {
+	leftValue, leftError := be.left.Eval() 
+	rightValue, rightError := be.right.Eval()
+	if leftError != nil { return nil, leftError }
+	if rightError != nil { return nil, rightError }
+
 	switch be.operation.Type {
 	case Star:
-		return leftValue.(float64) * rightValue.(float64)
+		return leftValue.(float64) * rightValue.(float64), nil
 	case Slash:
-		return leftValue.(float64) / rightValue.(float64)
+		return leftValue.(float64) / rightValue.(float64), nil
 	case Minus:
-		return leftValue.(float64) - rightValue.(float64)
+		return leftValue.(float64) - rightValue.(float64), nil
 	case Plus:
-		leftIsString := reflect.TypeOf(leftValue).Kind() == reflect.String
-		rightIsString := reflect.TypeOf(rightValue).Kind() == reflect.String
-		if leftIsString && rightIsString {
-			return leftValue.(string) + rightValue.(string)
+		if isString(leftValue) && isString(rightValue) {
+			return leftValue.(string) + rightValue.(string), nil
 		}
-		return leftValue.(float64) + rightValue.(float64)
+		return leftValue.(float64) + rightValue.(float64), nil
 	case Less:
-		return leftValue.(float64) < rightValue.(float64)
+		return leftValue.(float64) < rightValue.(float64), nil
 	case LessEqual:
-		return leftValue.(float64) <= rightValue.(float64)
+		return leftValue.(float64) <= rightValue.(float64), nil
 	case Greater:
-		return leftValue.(float64) > rightValue.(float64)
+		return leftValue.(float64) > rightValue.(float64), nil
 	case GreaterEqual:
-		return leftValue.(float64) >= rightValue.(float64)
+		return leftValue.(float64) >= rightValue.(float64), nil
 	case EqualEqual:
-		return isEqual(leftValue, rightValue)
+		return isEqual(leftValue, rightValue), nil
 	case BangEqual:
-		return !isEqual(leftValue, rightValue)
+		return !isEqual(leftValue, rightValue), nil
 	}
+
 	panic("! binary eval")
 }

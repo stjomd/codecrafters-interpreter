@@ -33,7 +33,13 @@ func main() {
 func evaluateCommand(input *string) {
 	tokens, _ := tokenize(input)
 	expr := parse(&tokens)
-	value := evaluate(expr)
+	value, evalError := evaluate(expr)
+
+	if evalError != nil {
+		fmt.Fprintln(os.Stderr, evalError)
+		os.Exit(70)
+	}
+
 	if value == nil {
 		fmt.Println("nil")
 	} else {
