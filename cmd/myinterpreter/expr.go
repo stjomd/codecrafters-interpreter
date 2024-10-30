@@ -46,7 +46,14 @@ func (ue UnaryExpr) String() string {
 	return fmt.Sprintf("(%v %v)", ue.operation.Lexeme, ue.expr)
 }
 func (ue UnaryExpr) Eval() any {
-	panic("!")
+	subvalue := ue.expr.Eval()
+	switch ue.operation.Type {
+	case Bang:
+		return !isTruthy(subvalue)
+	case Minus:
+		return -subvalue.(float64)
+	}
+	panic("! unary eval")
 }
 
 type BinaryExpr struct {
