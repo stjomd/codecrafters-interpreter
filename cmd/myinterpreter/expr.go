@@ -88,12 +88,18 @@ func (be BinaryExpr) Eval() (any, error) {
 		}
 		return leftValue.(float64) / rightValue.(float64), nil
 	case Minus:
+		if !isNumber(leftValue) || !isNumber(rightValue) {
+			return nil, runtimeError("Operands must be numbers.", be.operation.Line)
+		}
 		return leftValue.(float64) - rightValue.(float64), nil
 	case Plus:
+		if isNumber(leftValue) && isNumber(rightValue) {
+			return leftValue.(float64) + rightValue.(float64), nil
+		}
 		if isString(leftValue) && isString(rightValue) {
 			return leftValue.(string) + rightValue.(string), nil
 		}
-		return leftValue.(float64) + rightValue.(float64), nil
+		return nil, runtimeError("Operands must be two numbers or two strings.", be.operation.Line)
 	case Less:
 		return leftValue.(float64) < rightValue.(float64), nil
 	case LessEqual:
