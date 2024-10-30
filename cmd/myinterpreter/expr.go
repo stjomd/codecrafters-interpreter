@@ -9,6 +9,7 @@ import (
 
 type Expr interface {
 	String() string
+	Eval() any
 }
 
 type LiteralExpr struct {
@@ -23,12 +24,18 @@ func (le LiteralExpr) String() string {
 		return fmt.Sprint(le.value)
 	}
 }
+func (le LiteralExpr) Eval() any {
+	return le.value
+}
 
 type GroupingExpr struct {
 	expr Expr
 }
 func (ge GroupingExpr) String() string {
 	return fmt.Sprintf("(group %v)", ge.expr)
+}
+func (ge GroupingExpr) Eval() any {
+	panic("!")
 }
 
 type UnaryExpr struct {
@@ -38,6 +45,9 @@ type UnaryExpr struct {
 func (ue UnaryExpr) String() string {
 	return fmt.Sprintf("(%v %v)", ue.operation.Lexeme, ue.expr)
 }
+func (ue UnaryExpr) Eval() any {
+	panic("!")
+}
 
 type BinaryExpr struct {
 	left Expr
@@ -46,4 +56,7 @@ type BinaryExpr struct {
 }
 func (be BinaryExpr) String() string {
 	return fmt.Sprintf("(%v %v %v)", be.operation.Lexeme, be.left, be.right)
+}
+func (be BinaryExpr) Eval() any {
+	panic("!")
 }

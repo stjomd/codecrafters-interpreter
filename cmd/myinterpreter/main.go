@@ -13,6 +13,7 @@ func main() {
 	}
 
 	command := os.Args[1]
+
 	switch command {
 	case "tokenize":
 		input := readFile(os.Args[2])
@@ -20,10 +21,25 @@ func main() {
 	case "parse":
 		input := readFile(os.Args[2])
 		parseCommand(&input)
+	case "evaluate":
+		input := readFile(os.Args[2])
+		evaluateCommand(&input)
 	}
+
 }
 
 // MARK: - Commands
+
+func evaluateCommand(input *string) {
+	tokens, _ := tokenize(input)
+	expr := parse(&tokens)
+	value := evaluate(expr)
+	if value == nil {
+		fmt.Println("nil")
+	} else {
+		fmt.Println(value)
+	}
+}
 
 func parseCommand(input *string) {
 	tokens, _ := tokenize(input)
