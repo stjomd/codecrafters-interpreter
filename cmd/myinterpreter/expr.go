@@ -74,6 +74,11 @@ func (be BinaryExpr) Eval() any {
 	case Minus:
 		return leftValue.(float64) - rightValue.(float64)
 	case Plus:
+		leftIsString := reflect.TypeOf(leftValue).Kind() == reflect.String
+		rightIsString := reflect.TypeOf(rightValue).Kind() == reflect.String
+		if leftIsString && rightIsString {
+			return leftValue.(string) + rightValue.(string)
+		}
 		return leftValue.(float64) + rightValue.(float64)
 	}
 	panic("! binary eval")
