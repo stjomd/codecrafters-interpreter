@@ -78,8 +78,14 @@ func (be BinaryExpr) Eval() (any, error) {
 
 	switch be.operation.Type {
 	case Star:
+		if !isNumber(leftValue) || !isNumber(rightValue) {
+			return nil, runtimeError("Operands must be numbers.", be.operation.Line)
+		}
 		return leftValue.(float64) * rightValue.(float64), nil
 	case Slash:
+		if !isNumber(leftValue) || !isNumber(rightValue) {
+			return nil, runtimeError("Operands must be numbers.", be.operation.Line)
+		}
 		return leftValue.(float64) / rightValue.(float64), nil
 	case Minus:
 		return leftValue.(float64) - rightValue.(float64), nil
