@@ -88,6 +88,10 @@ func (be BinaryExpr) Eval() any {
 		return leftValue.(float64) > rightValue.(float64)
 	case GreaterEqual:
 		return leftValue.(float64) >= rightValue.(float64)
+	case EqualEqual:
+		return isEqual(leftValue, rightValue)
+	case BangEqual:
+		return !isEqual(leftValue, rightValue)
 	}
 	panic("! binary eval")
 }
