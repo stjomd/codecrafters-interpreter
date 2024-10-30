@@ -65,5 +65,12 @@ func (be BinaryExpr) String() string {
 	return fmt.Sprintf("(%v %v %v)", be.operation.Lexeme, be.left, be.right)
 }
 func (be BinaryExpr) Eval() any {
-	panic("!")
+	leftValue, rightValue := be.left.Eval(), be.right.Eval()
+	switch be.operation.Type {
+	case Star:
+		return leftValue.(float64) * rightValue.(float64)
+	case Slash:
+		return leftValue.(float64) / rightValue.(float64)
+	}
+	panic("! binary eval")
 }
