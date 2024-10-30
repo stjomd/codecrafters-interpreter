@@ -5,14 +5,13 @@ import (
 	"os"
 )
 
-func parse(tokens *[]Token) (Expr, []error) {
+func parse(tokens *[]Token) Expr {
 	parser := parser{tokens: tokens, position: 0}
-	return parser.expression(), parser.errors
+	return parser.expression()
 }
 
 type parser struct {
 	tokens *[]Token
-	errors []error
 	position int
 }
 
@@ -82,12 +81,11 @@ func (p *parser) primary() Expr {
 		return LiteralExpr{value: p.previous().Literal}
 	} else if p.match(LeftParen) {
 		expr := p.expression()
-		p.consume(RightParen)
+		p.consume(RightParen, "Expect ')'")
 		return GroupingExpr{expr: expr}
 	}
 	// Wrongful state
-	token := p.peek()
-	fmt.Fprintf(os.Stderr, "[line %d] Error at '%v': Expect expression.\n", token.Line, token.Lexeme)
+	fmt.Fprintf(os.Stderr, "[line %d] Error at '%v': Expect expression.\n", p.peek().Line, p.peek().Lexeme)
 	os.Exit(65)
 	panic("!")
 }
@@ -118,11 +116,13 @@ func (p *parser) advance() Token {
 	return p.previous()
 }
 
-func (p *parser) consume(tokenType TokenType) Token {
+func (p *parser) consume(tokenType TokenType, errorMessage string) Token {
 	if p.check(tokenType) {
 		return p.advance()
 	}
-	panic("unexp")
+	fmt.Fprintf(os.Stderr, "[line %d] Error at '%v': %s.\n", p.peek().Line, p.peek().Lexeme, errorMessage)
+	os.Exit(65)
+	panic("!")
 }
 
 func (p *parser) peek() Token {
