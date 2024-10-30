@@ -71,6 +71,10 @@ func (be BinaryExpr) Eval() any {
 		return leftValue.(float64) * rightValue.(float64)
 	case Slash:
 		return leftValue.(float64) / rightValue.(float64)
+	case Minus:
+		return leftValue.(float64) - rightValue.(float64)
+	case Plus:
+		return leftValue.(float64) + rightValue.(float64)
 	}
 	panic("! binary eval")
 }
