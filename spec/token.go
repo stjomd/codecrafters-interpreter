@@ -1,4 +1,4 @@
-package scan
+package spec
 
 import (
 	"fmt"
@@ -139,7 +139,7 @@ func (tt TokenType) String() string {
 	return "?"
 }
 
-var keywords = map[string]TokenType {
+var Keywords = map[string]TokenType {
 	"and": And,
 	"class": Class,
 	"else": Else,
@@ -158,7 +158,7 @@ var keywords = map[string]TokenType {
 	"while": While,
 }
 
-var singleCharTokens = map[rune]TokenType {
+var SingleCharTokens = map[rune]TokenType {
 	'(': LeftParen,
 	')': RightParen,
 	'{': LeftBrace,
@@ -185,14 +185,14 @@ func (token Token) String() string {
 	if (token.Literal == nil) {
 		literalString = "null"
 	} else if reflect.TypeOf(token.Literal).Kind() == reflect.Float64 {
-		literalString = Float64ToString(token.Literal.(float64))
+		literalString = float64ToString(token.Literal.(float64))
 	} else {
 		literalString = fmt.Sprintf("%v", token.Literal)
 	}
 	return fmt.Sprintf("%v %v %v", token.Type.String(), token.Lexeme, literalString)
 }
 
-func Float64ToString(number float64) string {
+func float64ToString(number float64) string {
 	literalString := fmt.Sprintf("%g", number)
 	if number == float64(int(number)) {
 		literalString = literalString + ".0"
