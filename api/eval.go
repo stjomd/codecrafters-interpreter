@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"errors"
@@ -11,6 +11,8 @@ import (
 func Eval(expr *spec.Expr) (any, error) {
 	return (*expr).Eval(evalVisitor{})
 }
+
+// MARK: - Evaluation using visitor pattern
 
 type evalVisitor struct {} // implements spec.Visitor
 

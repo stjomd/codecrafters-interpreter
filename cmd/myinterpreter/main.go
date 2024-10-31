@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/codecrafters-io/interpreter-starter-go/parse"
-	"github.com/codecrafters-io/interpreter-starter-go/scan"
+	"github.com/codecrafters-io/interpreter-starter-go/api"
 )
 
 func main() {
@@ -34,9 +33,9 @@ func main() {
 // MARK: - Commands
 
 func evaluateCommand(input *string) {
-	tokens, _ := scan.Tokenize(input)
-	expr := parse.Parse(&tokens)
-	value, evalError := Eval(&expr)
+	tokens, _ := api.Tokenize(input)
+	expr := api.Parse(&tokens)
+	value, evalError := api.Eval(&expr)
 
 	if evalError != nil {
 		fmt.Fprintln(os.Stderr, evalError)
@@ -51,13 +50,13 @@ func evaluateCommand(input *string) {
 }
 
 func parseCommand(input *string) {
-	tokens, _ := scan.Tokenize(input)
-	expr := parse.Parse(&tokens)
+	tokens, _ := api.Tokenize(input)
+	expr := api.Parse(&tokens)
 	fmt.Println(expr)
 }
 
 func tokenizeCommand(input *string) {
-	tokens, tokenizeErrors := scan.Tokenize(input)
+	tokens, tokenizeErrors := api.Tokenize(input)
 	if len(tokenizeErrors) > 0 {
 		for _, err := range tokenizeErrors {
 			fmt.Fprintln(os.Stderr, err)
