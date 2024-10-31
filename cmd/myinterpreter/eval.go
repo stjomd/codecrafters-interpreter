@@ -1,29 +1,35 @@
-package spec
+package main
 
 import (
 	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/codecrafters-io/interpreter-starter-go/spec"
 )
 
-// MARK: - Eval() implementations
+func Eval(expr *spec.Expr) (any, error) {
+	return (*expr).Eval(evalVisitor{})
+}
 
-func (le LiteralExpr) Eval() (any, error) {
+type evalVisitor struct {} // implements spec.Visitor
+
+func (ev evalVisitor) VisitLiteral(le spec.LiteralExpr) (any, error) {
 	return le.Value, nil
 }
 
-func (ge GroupingExpr) Eval() (any, error) {
-	return ge.Expr.Eval()
+func (ev evalVisitor) VisitGrouping(ge spec.GroupingExpr) (any, error) {
+	return ge.Expr.Eval(ev)
 }
 
-func (ue UnaryExpr) Eval() (any, error) {
-	subvalue, suberror := ue.Expr.Eval()
+func (ev evalVisitor) VisitUnary(ue spec.UnaryExpr) (any, error) {
+	subvalue, suberror := ue.Expr.Eval(ev)
 	if suberror != nil { return nil, suberror }
 
 	switch ue.Opt.Type {
-	case Bang:
+	case spec.Bang:
 		return !isTruthy(subvalue), nil
-	case Minus:
+	case spec.Minus:
 		if !isNumber(subvalue) {
 			return nil, runtimeError("Operand must be a number.", ue.Opt.Line)
 		}
@@ -34,29 +40,29 @@ func (ue UnaryExpr) Eval() (any, error) {
 	return nil, runtimeError(message, ue.Opt.Line)
 }
 
-func (be BinaryExpr) Eval() (any, error) {
-	leftValue, leftError := be.Left.Eval() 
-	rightValue, rightError := be.Right.Eval()
+func (ev evalVisitor) VisitBinary(be spec.BinaryExpr) (any, error) {
+	leftValue, leftError := be.Left.Eval(ev)
+	rightValue, rightError := be.Right.Eval(ev)
 	if leftError != nil { return nil, leftError }
 	if rightError != nil { return nil, rightError }
 
 	switch be.Opt.Type {
-	case Star:
+	case spec.Star:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
 			return nil, runtimeErrorMustBeNumbers(be.Opt.Line)
 		}
 		return leftValue.(float64) * rightValue.(float64), nil
-	case Slash:
+	case spec.Slash:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
 			return nil, runtimeErrorMustBeNumbers(be.Opt.Line)
 		}
 		return leftValue.(float64) / rightValue.(float64), nil
-	case Minus:
+	case spec.Minus:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
 			return nil, runtimeErrorMustBeNumbers(be.Opt.Line)
 		}
 		return leftValue.(float64) - rightValue.(float64), nil
-	case Plus:
+	case spec.Plus:
 		if isNumber(leftValue) && isNumber(rightValue) {
 			return leftValue.(float64) + rightValue.(float64), nil
 		}
@@ -64,29 +70,29 @@ func (be BinaryExpr) Eval() (any, error) {
 			return leftValue.(string) + rightValue.(string), nil
 		}
 		return nil, runtimeError("Operands must be two numbers or two strings.", be.Opt.Line)
-	case Less:
+	case spec.Less:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
 			return nil, runtimeErrorMustBeNumbers(be.Opt.Line)
 		}
 		return leftValue.(float64) < rightValue.(float64), nil
-	case LessEqual:
+	case spec.LessEqual:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
 			return nil, runtimeErrorMustBeNumbers(be.Opt.Line)
 		}
 		return leftValue.(float64) <= rightValue.(float64), nil
-	case Greater:
+	case spec.Greater:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
 			return nil, runtimeErrorMustBeNumbers(be.Opt.Line)
 		}
 		return leftValue.(float64) > rightValue.(float64), nil
-	case GreaterEqual:
+	case spec.GreaterEqual:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
 			return nil, runtimeErrorMustBeNumbers(be.Opt.Line)
 		}
 		return leftValue.(float64) >= rightValue.(float64), nil
-	case EqualEqual:
+	case spec.EqualEqual:
 		return isEqual(leftValue, rightValue), nil
-	case BangEqual:
+	case spec.BangEqual:
 		return !isEqual(leftValue, rightValue), nil
 	}
 

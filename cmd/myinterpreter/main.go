@@ -36,7 +36,7 @@ func main() {
 func evaluateCommand(input *string) {
 	tokens, _ := scan.Tokenize(input)
 	expr := parse.Parse(&tokens)
-	value, evalError := expr.Eval()
+	value, evalError := Eval(&expr)
 
 	if evalError != nil {
 		fmt.Fprintln(os.Stderr, evalError)

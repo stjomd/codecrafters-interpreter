@@ -9,7 +9,14 @@ import (
 
 type Expr interface {
 	String() string
-	Eval() (any, error) // eval.go
+	Eval(evaluator ExprVisitor[any, error]) (any, error)
+}
+
+type ExprVisitor[R any, E error] interface {
+	VisitLiteral(le LiteralExpr) (R, E)
+	VisitGrouping(ge GroupingExpr) (R, E)
+	VisitUnary(ue UnaryExpr) (R, E)
+	VisitBinary(be BinaryExpr) (R, E)
 }
 
 type LiteralExpr struct {
@@ -24,12 +31,18 @@ func (le LiteralExpr) String() string {
 		return fmt.Sprint(le.Value)
 	}
 }
+func (le LiteralExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
+	return evaluator.VisitLiteral(le)
+}
 
 type GroupingExpr struct {
 	Expr Expr
 }
 func (ge GroupingExpr) String() string {
 	return fmt.Sprintf("(group %v)", ge.Expr)
+}
+func (ge GroupingExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
+	return evaluator.VisitGrouping(ge)
 }
 
 type UnaryExpr struct {
@@ -39,6 +52,9 @@ type UnaryExpr struct {
 func (ue UnaryExpr) String() string {
 	return fmt.Sprintf("(%v %v)", ue.Opt.Lexeme, ue.Expr)
 }
+func (ue UnaryExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
+	return evaluator.VisitUnary(ue)
+}
 
 type BinaryExpr struct {
 	Left Expr
@@ -47,4 +63,7 @@ type BinaryExpr struct {
 }
 func (be BinaryExpr) String() string {
 	return fmt.Sprintf("(%v %v %v)", be.Opt.Lexeme, be.Left, be.Right)
+}
+func (be BinaryExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
+	return evaluator.VisitBinary(be)
 }
