@@ -37,30 +37,19 @@ func main() {
 
 func runCommand(input *string) {
 	tokens, tokenizeErrors := api.Tokenize(input)
-	if len(tokenizeErrors) > 0 {
-		for _, err := range tokenizeErrors {
-			fmt.Fprintln(os.Stderr, err)
-		}
-		os.Exit(65)
-	}
+	handleErrors(tokenizeErrors, 65)
 	statements, parseError := api.ParseStmts(&tokens)
-	if parseError != nil {
-		fmt.Fprintln(os.Stderr, parseError)
-		os.Exit(65)
-	}
+	handleError(parseError, 65)
 	api.Exec(&statements)
 }
 
 func evaluateCommand(input *string) {
-	tokens, _ := api.Tokenize(input)
-	expression := api.ParseExpr(&tokens)
-	value, evalError := api.Eval(&expression)
-
-	if evalError != nil {
-		fmt.Fprintln(os.Stderr, evalError)
-		os.Exit(70)
-	}
-
+	tokens, tokenizeErrors := api.Tokenize(input)
+	handleErrors(tokenizeErrors, 65)
+	expr, exprError := api.ParseExpr(&tokens)
+	handleError(exprError, 65)
+	value, evalError := api.Eval(&expr)
+	handleError(evalError, 70)
 	if value == nil {
 		fmt.Println("nil")
 	} else {
@@ -69,27 +58,36 @@ func evaluateCommand(input *string) {
 }
 
 func parseCommand(input *string) {
-	tokens, _ := api.Tokenize(input)
-	expr := api.ParseExpr(&tokens)
+	tokens, tokenizeErrors := api.Tokenize(input)
+	handleErrors(tokenizeErrors, 65)
+	expr, exprError := api.ParseExpr(&tokens)
+	handleError(exprError, 65)
 	fmt.Println(expr)
 }
 
 func tokenizeCommand(input *string) {
 	tokens, tokenizeErrors := api.Tokenize(input)
-	if len(tokenizeErrors) > 0 {
-		for _, err := range tokenizeErrors {
-			fmt.Fprintln(os.Stderr, err)
-		}
-	}
 	for _, token := range tokens {
 		fmt.Println(token)
 	}
-	if len(tokenizeErrors) > 0 {
-		os.Exit(65)
-	}
+	handleErrors(tokenizeErrors, 65)
 }
 
 // MARK: - Helpers
+
+func handleErrors(errors []error, exitCode int) {
+	if len(errors) == 0 { return }
+	for _, err := range errors {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	os.Exit(exitCode)
+}
+
+func handleError(err error, exitCode int) {
+	if err == nil { return }
+	fmt.Fprintln(os.Stderr, err)
+	os.Exit(exitCode)
+}
 
 func readFile(filename string) string {
 	fileContents, err := os.ReadFile(filename)
