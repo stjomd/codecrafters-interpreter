@@ -15,19 +15,16 @@ func main() {
 	}
 
 	command := os.Args[1]
+	input := readFile(os.Args[2])
 
 	switch command {
 	case "tokenize":
-		input := readFile(os.Args[2])
 		tokenizeCommand(&input)
 	case "parse":
-		input := readFile(os.Args[2])
 		parseCommand(&input)
 	case "evaluate":
-		input := readFile(os.Args[2])
 		evaluateCommand(&input)
 	case "run":
-		input := readFile(os.Args[2])
 		runCommand(&input)
 	}
 
