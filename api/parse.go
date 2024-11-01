@@ -34,7 +34,15 @@ func (p *parser) statement() (spec.Stmt, error) {
 	if p.match(spec.Print) {
 		return p.printStatement()
 	}
-	panic("! statement")
+	return p.expressionStatement()
+}
+
+func (p *parser) expressionStatement() (spec.Stmt, error) {
+	expr, err := p.expression()
+	if err != nil { return nil, err }
+	_, consumeError := p.consume(spec.Semicolon, "Expect ';' after value")
+	if consumeError != nil { return nil, consumeError }
+	return spec.ExprStmt{Expr: expr}, nil
 }
 
 func (p *parser) printStatement() (spec.Stmt, error) {

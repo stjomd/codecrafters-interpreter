@@ -23,3 +23,10 @@ func (ev execVisitor) VisitPrint(ps spec.PrintStmt) error {
 	fmt.Println(value)
 	return nil
 }
+
+func (ev execVisitor) VisitExpr(es spec.ExprStmt) error {
+	if _, evalError := Eval(&es.Expr); evalError != nil {
+		return evalError
+	}
+	return nil
+}
