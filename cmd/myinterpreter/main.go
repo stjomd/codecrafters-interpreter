@@ -26,16 +26,35 @@ func main() {
 	case "evaluate":
 		input := readFile(os.Args[2])
 		evaluateCommand(&input)
+	case "run":
+		input := readFile(os.Args[2])
+		runCommand(&input)
 	}
 
 }
 
 // MARK: - Commands
 
+func runCommand(input *string) {
+	tokens, tokenizeErrors := api.Tokenize(input)
+	if len(tokenizeErrors) > 0 {
+		for _, err := range tokenizeErrors {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		os.Exit(65)
+	}
+	statements, parseError := api.ParseStmts(&tokens)
+	if parseError != nil {
+		fmt.Fprintln(os.Stderr, parseError)
+		os.Exit(65)
+	}
+	api.Exec(&statements)
+}
+
 func evaluateCommand(input *string) {
 	tokens, _ := api.Tokenize(input)
-	expr := api.Parse(&tokens)
-	value, evalError := api.Eval(&expr)
+	expression := api.ParseExpr(&tokens)
+	value, evalError := api.Eval(&expression)
 
 	if evalError != nil {
 		fmt.Fprintln(os.Stderr, evalError)
@@ -51,7 +70,7 @@ func evaluateCommand(input *string) {
 
 func parseCommand(input *string) {
 	tokens, _ := api.Tokenize(input)
-	expr := api.Parse(&tokens)
+	expr := api.ParseExpr(&tokens)
 	fmt.Println(expr)
 }
 

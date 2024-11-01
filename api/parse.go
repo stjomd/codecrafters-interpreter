@@ -7,9 +7,18 @@ import (
 	"github.com/codecrafters-io/interpreter-starter-go/spec"
 )
 
-func Parse(tokens *[]spec.Token) spec.Expr {
+func ParseExpr(tokens *[]spec.Token) spec.Expr {
 	parser := parser{tokens: tokens, position: 0}
 	return parser.expression()
+}
+
+func ParseStmts(tokens *[]spec.Token) ([]spec.Stmt, error) {
+	var statements []spec.Stmt
+	parser := parser{tokens: tokens, position: 0}
+	for parser.peek().Type != spec.EOF {
+		statements = append(statements, parser.statement())
+	}
+	return statements, nil
 }
 
 type parser struct {
@@ -18,6 +27,19 @@ type parser struct {
 }
 
 // MARK: - Grammar rules
+
+func (p *parser) statement() spec.Stmt {
+	if p.match(spec.Print) {
+		return p.printStatement()
+	}
+	panic("! statement")
+}
+
+func (p *parser) printStatement() spec.Stmt {
+	expr := p.expression()
+	p.consume(spec.Semicolon, "Expect ';' after value.")
+	return spec.PrintStmt{Expr: expr}
+}
 
 func (p *parser) expression() spec.Expr {
 	return p.equality()
