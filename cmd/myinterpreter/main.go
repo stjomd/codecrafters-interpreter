@@ -43,8 +43,8 @@ func runCommand(input *string) {
 func evaluateCommand(input *string) {
 	tokens, tokenizeErrors := api.Tokenize(input)
 	handleErrors(tokenizeErrors, 65)
-	expr, exprError := api.ParseExpr(&tokens)
-	handleError(exprError, 65)
+	expr, parseError := api.ParseExpr(&tokens)
+	handleError(parseError, 65)
 	value, evalError := api.Eval(&expr)
 	handleError(evalError, 70)
 	if value == nil {
@@ -57,8 +57,8 @@ func evaluateCommand(input *string) {
 func parseCommand(input *string) {
 	tokens, tokenizeErrors := api.Tokenize(input)
 	handleErrors(tokenizeErrors, 65)
-	expr, exprError := api.ParseExpr(&tokens)
-	handleError(exprError, 65)
+	expr, parseError := api.ParseExpr(&tokens)
+	handleError(parseError, 65)
 	fmt.Println(expr)
 }
 
