@@ -96,7 +96,7 @@ func handleNumber(tokens *[]spec.Token, runes *[]rune, currentPosition int, line
 // String handling
 func handleString(tokens *[]spec.Token, runes *[]rune, currentPosition int, line uint64) (int, error) {
 	slice := *runes
-	index := skipUntil(runes, currentPosition + 1, isStringEndOrNewline)
+	index := skipUntil(runes, currentPosition + 1, isStringEnd)
 	if (index >= len(slice) || slice[index] == '\n') {
 		//lint:ignore ST1005 spec requires capitalized message with period at the end
 		return index, errors.New("Unterminated string.")
@@ -127,10 +127,10 @@ func handleSingleDoubleCharToken(
 // MARK: Lookahead functions
 
 var (
-	isNewline            = func(x rune) bool { return x == '\n' }
-	isStringEndOrNewline = func(x rune) bool { return x == '"' || x == '\n' }
-	isNumberEnd          = func(x rune) bool { return x != '.' && !unicode.IsDigit(x) }
-	isIdentifierEnd      = func(x rune) bool { return !unicode.IsLetter(x) && !unicode.IsDigit(x) && x != '_' }
+	isNewline       = func(x rune) bool { return x == '\n' }
+	isStringEnd     = func(x rune) bool { return x == '"' }
+	isNumberEnd     = func(x rune) bool { return x != '.' && !unicode.IsDigit(x) }
+	isIdentifierEnd = func(x rune) bool { return !unicode.IsLetter(x) && !unicode.IsDigit(x) && x != '_' }
 )
 // Looks ahead, starting at the specified position, and until a specified condition is fulfiled or the end of input is
 // reached, and returns the position.
