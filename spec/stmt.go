@@ -8,6 +8,7 @@ type StmtVisitor[R any] interface {
 	VisitPrint(printStmt PrintStmt) R
 	VisitExpr(exprStmt ExprStmt) R
 	VisitDeclare(declareStmt DeclareStmt) R
+	VisitBlock(blockStmt BlockStmt) R
 }
 
 type PrintStmt struct {
@@ -30,4 +31,11 @@ type DeclareStmt struct {
 }
 func (ds DeclareStmt) Exec(executor StmtVisitor[error]) error {
 	return executor.VisitDeclare(ds)
+}
+
+type BlockStmt struct {
+	Statements []Stmt
+}
+func (bs BlockStmt) Exec(executor StmtVisitor[error]) error {
+	return executor.VisitBlock(bs)
 }

@@ -46,3 +46,11 @@ func (ev execVisitor) VisitDeclare(ds spec.DeclareStmt) error {
 	ev.env.Define(ds.Identifier.Lexeme, value)
 	return nil
 }
+
+func (ev execVisitor) VisitBlock(bs spec.BlockStmt) error {
+	for _, stmt := range bs.Statements {
+		err := stmt.Exec(ev)
+		if err != nil { return err }
+	}
+	return nil
+}

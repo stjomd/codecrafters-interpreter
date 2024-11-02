@@ -30,6 +30,7 @@ type parser struct {
 }
 
 // MARK: - Grammar rules
+// MARK: Statements
 
 func (p *parser) declaration() (spec.Stmt, error) {
 	if (p.match(spec.Var)) {
@@ -55,6 +56,8 @@ func (p *parser) varDeclaration() (spec.Stmt, error) {
 func (p *parser) statement() (spec.Stmt, error) {
 	if p.match(spec.Print) {
 		return p.printStatement()
+	} else if p.match(spec.LeftBrace) {
+		return p.blockStatement()
 	}
 	return p.expressionStatement()
 }
@@ -74,6 +77,20 @@ func (p *parser) printStatement() (spec.Stmt, error) {
 	if consumeError != nil { return nil, consumeError }
 	return spec.PrintStmt{Expr: expr}, nil
 }
+
+func (p *parser) blockStatement() (spec.Stmt, error) {
+	var statements []spec.Stmt
+	for !p.check(spec.RightBrace) && (p.peek().Type != spec.EOF) {
+		stmt, stmtError := p.declaration()
+		if stmtError != nil { return nil, stmtError }
+		statements = append(statements, stmt)
+	}
+	_, consumeError := p.consume(spec.RightBrace, "Expect '}' after block")
+	if consumeError != nil { return nil, consumeError }
+	return spec.BlockStmt{Statements: statements}, nil
+}
+
+// MARK: Expressions
 
 func (p *parser) expression() (spec.Expr, error) {
 	return p.assignment()
