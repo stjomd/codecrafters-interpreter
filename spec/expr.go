@@ -17,6 +17,7 @@ type ExprVisitor[R any, E error] interface {
 	VisitGrouping(ge GroupingExpr) (R, E)
 	VisitUnary(ue UnaryExpr) (R, E)
 	VisitBinary(be BinaryExpr) (R, E)
+	VisitVariable(ve VariableExpr) (R, E)
 }
 
 type LiteralExpr struct {
@@ -66,4 +67,14 @@ func (be BinaryExpr) String() string {
 }
 func (be BinaryExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
 	return evaluator.VisitBinary(be)
+}
+
+type VariableExpr struct {
+	Identifier string
+}
+func (ve VariableExpr) String() string {
+	return ve.Identifier
+}
+func (ve VariableExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
+	return evaluator.VisitVariable(ve)
 }

@@ -16,7 +16,7 @@ func ParseStmts(tokens *[]spec.Token) ([]spec.Stmt, error) {
 	var statements []spec.Stmt
 	parser := parser{tokens: tokens, position: 0}
 	for parser.peek().Type != spec.EOF {
-		stmt, err := parser.statement()
+		stmt, err := parser.declaration()
 		if err != nil { return nil, err }
 		statements = append(statements, stmt)
 	}
@@ -29,6 +29,27 @@ type parser struct {
 }
 
 // MARK: - Grammar rules
+
+func (p *parser) declaration() (spec.Stmt, error) {
+	if (p.match(spec.Var)) {
+		return p.varDeclaration() 
+	}
+	return p.statement()
+}
+
+func (p *parser) varDeclaration() (spec.Stmt, error) {
+	identifier, consumeError := p.consume(spec.Identifier, "Expect variable name")
+	if consumeError != nil { return nil, consumeError }
+	var expr spec.Expr = spec.LiteralExpr{Value: nil}
+	if p.match(spec.Equal) {
+		expression, expressionError := p.expression()
+		if expressionError != nil { return nil, expressionError }
+		expr = expression
+	}
+	_, consumeError = p.consume(spec.Semicolon, "Expect ';' after variable declaration")
+	if consumeError != nil { return nil, consumeError }
+	return spec.DeclareStmt{Identifier: identifier, Expr: expr}, nil
+}
 
 func (p *parser) statement() (spec.Stmt, error) {
 	if p.match(spec.Print) {
@@ -116,7 +137,9 @@ func (p *parser) unary() (spec.Expr, error) {
 }
 
 func (p *parser) primary() (spec.Expr, error) {
-	if p.match(spec.True) {
+	if p.match(spec.Identifier) {
+		return spec.VariableExpr{Identifier: p.previous().Lexeme}, nil
+	} else if p.match(spec.True) {
 		return spec.LiteralExpr{Value: true}, nil
 	} else if p.match(spec.False) {
 		return spec.LiteralExpr{Value: false}, nil

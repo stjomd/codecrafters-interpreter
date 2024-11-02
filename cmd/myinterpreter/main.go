@@ -46,7 +46,7 @@ func evaluateCommand(input *string) {
 	handleErrors(tokenizeErrors, 65)
 	expr, parseError := api.ParseExpr(&tokens)
 	handleError(parseError, 65)
-	value, evalError := api.Eval(&expr)
+	value, evalError := api.EvalWithoutEnv(&expr)
 	handleError(evalError, 70)
 	if value == nil {
 		fmt.Println("nil")

@@ -7,6 +7,7 @@ type Stmt interface {
 type StmtVisitor[R any] interface {
 	VisitPrint(printStmt PrintStmt) R
 	VisitExpr(exprStmt ExprStmt) R
+	VisitDeclare(declareStmt DeclareStmt) R
 }
 
 type PrintStmt struct {
@@ -21,4 +22,12 @@ type ExprStmt struct {
 }
 func (es ExprStmt) Exec(executor StmtVisitor[error]) error {
 	return executor.VisitExpr(es)
+}
+
+type DeclareStmt struct {
+	Identifier Token
+	Expr Expr
+}
+func (ds DeclareStmt) Exec(executor StmtVisitor[error]) error {
+	return executor.VisitDeclare(ds)
 }

@@ -8,13 +8,20 @@ import (
 	"github.com/codecrafters-io/interpreter-starter-go/spec"
 )
 
-func Eval(expr *spec.Expr) (any, error) {
-	return (*expr).Eval(evalVisitor{})
+func EvalWithoutEnv(expr *spec.Expr) (any, error) {
+	env := NewEnv()
+	return (*expr).Eval(evalVisitor{env: &env})
+}
+
+func Eval(expr *spec.Expr, env *Environment) (any, error) {
+	return (*expr).Eval(evalVisitor{env: env})
 }
 
 // MARK: - Evaluation using visitor pattern
 
-type evalVisitor struct {} // implements spec.Visitor
+type evalVisitor struct { // implements spec.Visitor
+	env *Environment
+}
 
 func (ev evalVisitor) VisitLiteral(le spec.LiteralExpr) (any, error) {
 	return le.Value, nil
@@ -100,6 +107,10 @@ func (ev evalVisitor) VisitBinary(be spec.BinaryExpr) (any, error) {
 
 	message := fmt.Sprintf("Unexpected type of binary expression: %s.", be.Opt.Type.String())
 	return nil, runtimeError(message, be.Opt.Line)
+}
+
+func (ev evalVisitor) VisitVariable(be spec.VariableExpr) (any, error) {
+	return ev.env.Get(be.Identifier)
 }
 
 
