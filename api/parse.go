@@ -138,7 +138,7 @@ func (p *parser) unary() (spec.Expr, error) {
 
 func (p *parser) primary() (spec.Expr, error) {
 	if p.match(spec.Identifier) {
-		return spec.VariableExpr{Identifier: p.previous().Lexeme}, nil
+		return spec.VariableExpr{Identifier: p.previous()}, nil
 	} else if p.match(spec.True) {
 		return spec.LiteralExpr{Value: true}, nil
 	} else if p.match(spec.False) {

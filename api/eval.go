@@ -40,12 +40,12 @@ func (ev evalVisitor) VisitUnary(ue spec.UnaryExpr) (any, error) {
 		return !isTruthy(subvalue), nil
 	case spec.Minus:
 		if !isNumber(subvalue) {
-			return nil, runtimeError("Operand must be a number.", ue.Opt.Line)
+			return nil, runtimeError("Operand must be a number", ue.Opt.Line)
 		}
 		return -subvalue.(float64), nil
 	}
 	
-	message := fmt.Sprintf("Unexpected type of unary expression: %s.", ue.Opt.Type.String())
+	message := fmt.Sprintf("Unexpected type of unary expression: %s", ue.Opt.Type.String())
 	return nil, runtimeError(message, ue.Opt.Line)
 }
 
@@ -58,17 +58,17 @@ func (ev evalVisitor) VisitBinary(be spec.BinaryExpr) (any, error) {
 	switch be.Opt.Type {
 	case spec.Star:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeErrorMustBeNumbers(be.Opt.Line)
+			return nil, runtimeError(operandsMustBeNumbers, be.Opt.Line)
 		}
 		return leftValue.(float64) * rightValue.(float64), nil
 	case spec.Slash:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeErrorMustBeNumbers(be.Opt.Line)
+			return nil, runtimeError(operandsMustBeNumbers, be.Opt.Line)
 		}
 		return leftValue.(float64) / rightValue.(float64), nil
 	case spec.Minus:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeErrorMustBeNumbers(be.Opt.Line)
+			return nil, runtimeError(operandsMustBeNumbers, be.Opt.Line)
 		}
 		return leftValue.(float64) - rightValue.(float64), nil
 	case spec.Plus:
@@ -78,25 +78,25 @@ func (ev evalVisitor) VisitBinary(be spec.BinaryExpr) (any, error) {
 		if isString(leftValue) && isString(rightValue) {
 			return leftValue.(string) + rightValue.(string), nil
 		}
-		return nil, runtimeError("Operands must be two numbers or two strings.", be.Opt.Line)
+		return nil, runtimeError("Operands must be two numbers or two strings", be.Opt.Line)
 	case spec.Less:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeErrorMustBeNumbers(be.Opt.Line)
+			return nil, runtimeError(operandsMustBeNumbers, be.Opt.Line)
 		}
 		return leftValue.(float64) < rightValue.(float64), nil
 	case spec.LessEqual:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeErrorMustBeNumbers(be.Opt.Line)
+			return nil, runtimeError(operandsMustBeNumbers, be.Opt.Line)
 		}
 		return leftValue.(float64) <= rightValue.(float64), nil
 	case spec.Greater:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeErrorMustBeNumbers(be.Opt.Line)
+			return nil, runtimeError(operandsMustBeNumbers, be.Opt.Line)
 		}
 		return leftValue.(float64) > rightValue.(float64), nil
 	case spec.GreaterEqual:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeErrorMustBeNumbers(be.Opt.Line)
+			return nil, runtimeError(operandsMustBeNumbers, be.Opt.Line)
 		}
 		return leftValue.(float64) >= rightValue.(float64), nil
 	case spec.EqualEqual:
@@ -105,23 +105,22 @@ func (ev evalVisitor) VisitBinary(be spec.BinaryExpr) (any, error) {
 		return !isEqual(leftValue, rightValue), nil
 	}
 
-	message := fmt.Sprintf("Unexpected type of binary expression: %s.", be.Opt.Type.String())
+	message := fmt.Sprintf("Unexpected type of binary expression: %s", be.Opt.Type.String())
 	return nil, runtimeError(message, be.Opt.Line)
 }
 
 func (ev evalVisitor) VisitVariable(be spec.VariableExpr) (any, error) {
-	return ev.env.Get(be.Identifier)
+	value, err := ev.env.Get(be.Identifier.Lexeme)
+	if err != nil { return nil, runtimeError(err.Error(), be.Identifier.Line) }
+	return value, nil
 }
 
 
 // MARK: - Helpers
 
-func runtimeErrorMustBeNumbers(line uint64) error {
-	return runtimeError("Operands must be numbers.", line)
-}
-
+const operandsMustBeNumbers = "Operands must be numbers"
 func runtimeError(message string, line uint64) error {
-	errorMessage := fmt.Sprintf("%s\n[line %d]", message, line)
+	errorMessage := fmt.Sprintf("%s.\n[line %d]", message, line)
 	return errors.New(errorMessage)
 }
 

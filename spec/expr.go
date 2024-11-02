@@ -70,10 +70,10 @@ func (be BinaryExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
 }
 
 type VariableExpr struct {
-	Identifier string
+	Identifier Token
 }
 func (ve VariableExpr) String() string {
-	return ve.Identifier
+	return ve.Identifier.Lexeme
 }
 func (ve VariableExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
 	return evaluator.VisitVariable(ve)
