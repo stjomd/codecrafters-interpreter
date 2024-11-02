@@ -25,7 +25,11 @@ type execVisitor struct { // implements spec.ExecVisitor
 func (ev execVisitor) VisitPrint(ps spec.PrintStmt) error {
 	value, evalError := Eval(&ps.Expr, ev.env)
 	if evalError != nil { return evalError }
-	fmt.Println(value)
+	if value == nil {
+		fmt.Println("nil")
+	} else {
+		fmt.Println(value)
+	}
 	return nil
 }
 
