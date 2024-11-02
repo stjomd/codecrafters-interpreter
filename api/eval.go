@@ -115,6 +115,14 @@ func (ev evalVisitor) VisitVariable(be spec.VariableExpr) (any, error) {
 	return value, nil
 }
 
+func (ev evalVisitor) VisitAssignment(ae spec.AssignmentExpr) (any, error) {
+	value, evalError := ae.Expr.Eval(ev)
+	if evalError != nil { return nil, runtimeError(evalError.Error(), ae.Identifier.Line) }
+	assignError := ev.env.Assign(ae.Identifier.Lexeme, value)
+	if assignError != nil { return nil, runtimeError(assignError.Error(), ae.Identifier.Line) }
+	return value, nil
+}
+
 
 // MARK: - Helpers
 

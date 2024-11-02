@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/codecrafters-io/interpreter-starter-go/spec"
 )
@@ -75,7 +76,21 @@ func (p *parser) printStatement() (spec.Stmt, error) {
 }
 
 func (p *parser) expression() (spec.Expr, error) {
-	return p.equality()
+	return p.assignment()
+}
+
+func (p *parser) assignment() (spec.Expr, error) {
+	expr, exprError := p.equality()
+	if exprError != nil { return nil, exprError }
+	if p.match(spec.Equal) {
+		value, valueError := p.assignment()
+		if valueError != nil { return nil, valueError }
+		if areTypesEqual(expr, spec.VariableExpr{}) {
+			identifier := expr.(spec.VariableExpr).Identifier
+			return spec.AssignmentExpr{Identifier: identifier, Expr: value}, nil
+		}
+	}
+	return expr, nil
 }
 
 func (p *parser) equality() (spec.Expr, error) {
@@ -198,4 +213,10 @@ func (p *parser) peek() spec.Token {
 
 func (p *parser) previous() spec.Token {
 	return (*p.tokens)[p.position - 1]
+}
+
+// MARK: - Crimes against humanity
+
+func areTypesEqual(a any, b any) bool {
+	return reflect.TypeOf(a) == reflect.TypeOf(b)
 }

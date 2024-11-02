@@ -18,6 +18,7 @@ type ExprVisitor[R any, E error] interface {
 	VisitUnary(ue UnaryExpr) (R, E)
 	VisitBinary(be BinaryExpr) (R, E)
 	VisitVariable(ve VariableExpr) (R, E)
+	VisitAssignment(ae AssignmentExpr) (R, E)
 }
 
 type LiteralExpr struct {
@@ -73,8 +74,19 @@ type VariableExpr struct {
 	Identifier Token
 }
 func (ve VariableExpr) String() string {
-	return ve.Identifier.Lexeme
+	return fmt.Sprintf("(var %v)", ve.Identifier.Lexeme)
 }
 func (ve VariableExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
 	return evaluator.VisitVariable(ve)
+}
+
+type AssignmentExpr struct {
+	Identifier Token
+	Expr Expr
+}
+func (ae AssignmentExpr) String() string {
+	return fmt.Sprintf("(assign %v %v)", ae.Identifier.Lexeme, ae.Expr)
+}
+func (ae AssignmentExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
+	return evaluator.VisitAssignment(ae)
 }
