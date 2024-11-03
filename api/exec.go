@@ -7,10 +7,10 @@ import (
 )
 
 func Exec(statements *[]spec.Stmt) error {
-	env := NewEnv()
+	env := newEnv()
 	executor := execVisitor{env: &env}
 	for _, stmt := range *statements {
-		err := stmt.Exec(executor)
+		err := stmt.Exec(&executor)
 		if err != nil { return err }
 	}
 	return nil
@@ -19,10 +19,10 @@ func Exec(statements *[]spec.Stmt) error {
 // MAKE: - Execution using visitor pattern
 
 type execVisitor struct { // implements spec.ExecVisitor
-	env *Environment
+	env *environment
 }
 
-func (ev execVisitor) VisitPrint(ps spec.PrintStmt) error {
+func (ev *execVisitor) VisitPrint(ps spec.PrintStmt) error {
 	value, evalError := Eval(&ps.Expr, ev.env)
 	if evalError != nil { return evalError }
 	if value == nil {
@@ -33,24 +33,28 @@ func (ev execVisitor) VisitPrint(ps spec.PrintStmt) error {
 	return nil
 }
 
-func (ev execVisitor) VisitExpr(es spec.ExprStmt) error {
+func (ev *execVisitor) VisitExpr(es spec.ExprStmt) error {
 	if _, evalError := Eval(&es.Expr, ev.env); evalError != nil {
 		return evalError
 	}
 	return nil
 }
 
-func (ev execVisitor) VisitDeclare(ds spec.DeclareStmt) error {
+func (ev *execVisitor) VisitDeclare(ds spec.DeclareStmt) error {
 	value, evalError := Eval(&ds.Expr, ev.env)
 	if evalError != nil { return evalError }
-	ev.env.Define(ds.Identifier.Lexeme, value)
+	ev.env.define(ds.Identifier.Lexeme, value)
 	return nil
 }
 
-func (ev execVisitor) VisitBlock(bs spec.BlockStmt) error {
+func (ev *execVisitor) VisitBlock(bs spec.BlockStmt) error {
+	outerEnv := ev.env
+	innerEnv := newEnvWithParent(ev.env)
+	ev.env = &innerEnv
 	for _, stmt := range bs.Statements {
 		err := stmt.Exec(ev)
 		if err != nil { return err }
 	}
+	ev.env = outerEnv
 	return nil
 }

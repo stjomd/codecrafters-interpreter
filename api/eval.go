@@ -9,18 +9,18 @@ import (
 )
 
 func EvalWithoutEnv(expr *spec.Expr) (any, error) {
-	env := NewEnv()
+	env := newEnv()
 	return (*expr).Eval(evalVisitor{env: &env})
 }
 
-func Eval(expr *spec.Expr, env *Environment) (any, error) {
+func Eval(expr *spec.Expr, env *environment) (any, error) {
 	return (*expr).Eval(evalVisitor{env: env})
 }
 
 // MARK: - Evaluation using visitor pattern
 
 type evalVisitor struct { // implements spec.Visitor
-	env *Environment
+	env *environment
 }
 
 func (ev evalVisitor) VisitLiteral(le spec.LiteralExpr) (any, error) {
@@ -110,7 +110,7 @@ func (ev evalVisitor) VisitBinary(be spec.BinaryExpr) (any, error) {
 }
 
 func (ev evalVisitor) VisitVariable(be spec.VariableExpr) (any, error) {
-	value, err := ev.env.Get(be.Identifier.Lexeme)
+	value, err := ev.env.get(be.Identifier.Lexeme)
 	if err != nil { return nil, runtimeError(err.Error(), be.Identifier.Line) }
 	return value, nil
 }
@@ -118,7 +118,7 @@ func (ev evalVisitor) VisitVariable(be spec.VariableExpr) (any, error) {
 func (ev evalVisitor) VisitAssignment(ae spec.AssignmentExpr) (any, error) {
 	value, evalError := ae.Expr.Eval(ev)
 	if evalError != nil { return nil, runtimeError(evalError.Error(), ae.Identifier.Line) }
-	assignError := ev.env.Assign(ae.Identifier.Lexeme, value)
+	assignError := ev.env.assign(ae.Identifier.Lexeme, value)
 	if assignError != nil { return nil, runtimeError(assignError.Error(), ae.Identifier.Line) }
 	return value, nil
 }
