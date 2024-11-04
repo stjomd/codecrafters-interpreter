@@ -58,6 +58,8 @@ func (p *parser) statement() (spec.Stmt, error) {
 		return p.printStatement()
 	} else if p.match(spec.LeftBrace) {
 		return p.blockStatement()
+	} else if p.match(spec.If) {
+		return p.ifStatement()
 	}
 	return p.expressionStatement()
 }
@@ -88,6 +90,35 @@ func (p *parser) blockStatement() (spec.Stmt, error) {
 	_, consumeError := p.consume(spec.RightBrace, "Expect '}' after block")
 	if consumeError != nil { return nil, consumeError }
 	return spec.BlockStmt{Statements: statements}, nil
+}
+
+func (p *parser) ifStatement() (spec.Stmt, error) {
+	// condition
+	if _, consumeError := p.consume(spec.LeftParen, "exp ("); consumeError != nil {
+		return nil, consumeError
+	}
+	condition, conditionError := p.expression()
+	if conditionError != nil {
+		return nil, conditionError
+	}
+	if _, consumeError := p.consume(spec.RightParen, "exp )"); consumeError != nil {
+		return nil, consumeError
+	}
+	// then branch
+	thenBranch, thenError := p.statement()
+	if thenError != nil {
+		return nil, thenError
+	}
+	stmt := spec.IfStmt{Condition: condition, Then: thenBranch}
+	// (optional) else branch
+	if p.match(spec.Else) {
+		elseBranch, elseError := p.statement()
+		if elseError != nil {
+			return nil, elseError
+		}
+		stmt.Else = elseBranch
+	}
+	return stmt, nil
 }
 
 // MARK: Expressions

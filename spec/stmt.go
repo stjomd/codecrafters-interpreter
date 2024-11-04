@@ -9,6 +9,7 @@ type StmtVisitor[R any] interface {
 	VisitExpr(exprStmt ExprStmt) R
 	VisitDeclare(declareStmt DeclareStmt) R
 	VisitBlock(blockStmt BlockStmt) R
+	VisitIf(ifStmt IfStmt) R
 }
 
 type PrintStmt struct {
@@ -38,4 +39,13 @@ type BlockStmt struct {
 }
 func (bs BlockStmt) Exec(executor StmtVisitor[error]) error {
 	return executor.VisitBlock(bs)
+}
+
+type IfStmt struct {
+	Condition Expr
+	Then Stmt
+	Else Stmt
+}
+func (is IfStmt) Exec(executor StmtVisitor[error]) error {
+	return executor.VisitIf(is)
 }

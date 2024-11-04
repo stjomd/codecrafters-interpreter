@@ -58,3 +58,14 @@ func (ev *execVisitor) VisitBlock(bs spec.BlockStmt) error {
 	ev.env = outerEnv
 	return nil
 }
+
+func (ev *execVisitor) VisitIf(is spec.IfStmt) error {
+	condition, conditionError := Eval(&is.Condition, ev.env)
+	if conditionError != nil { return conditionError }
+	if isTruthy(condition) {
+		is.Then.Exec(ev)
+	} else if is.Else != nil {
+		is.Else.Exec(ev)
+	}
+	return nil
+}
