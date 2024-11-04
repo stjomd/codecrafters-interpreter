@@ -10,6 +10,7 @@ type StmtVisitor[R any] interface {
 	VisitDeclare(declareStmt DeclareStmt) R
 	VisitBlock(blockStmt BlockStmt) R
 	VisitIf(ifStmt IfStmt) R
+	VisitWhile(whileStmt WhileStmt) R
 }
 
 type PrintStmt struct {
@@ -48,4 +49,12 @@ type IfStmt struct {
 }
 func (is IfStmt) Exec(executor StmtVisitor[error]) error {
 	return executor.VisitIf(is)
+}
+
+type WhileStmt struct {
+	Condition Expr
+	Body Stmt
+}
+func (ws WhileStmt) Exec(executor StmtVisitor[error]) error {
+	return executor.VisitWhile(ws)
 }

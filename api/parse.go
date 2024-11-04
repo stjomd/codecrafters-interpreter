@@ -30,6 +30,7 @@ type parser struct {
 }
 
 // MARK: - Grammar rules
+
 // MARK: Statements
 
 func (p *parser) declaration() (spec.Stmt, error) {
@@ -60,6 +61,8 @@ func (p *parser) statement() (spec.Stmt, error) {
 		return p.blockStatement()
 	} else if p.match(spec.If) {
 		return p.ifStatement()
+	} else if p.match(spec.While) {
+		return p.whileStatement()
 	}
 	return p.expressionStatement()
 }
@@ -94,14 +97,14 @@ func (p *parser) blockStatement() (spec.Stmt, error) {
 
 func (p *parser) ifStatement() (spec.Stmt, error) {
 	// condition
-	if _, consumeError := p.consume(spec.LeftParen, "exp ("); consumeError != nil {
+	if _, consumeError := p.consume(spec.LeftParen, "Expect '(' after 'if'."); consumeError != nil {
 		return nil, consumeError
 	}
 	condition, conditionError := p.expression()
 	if conditionError != nil {
 		return nil, conditionError
 	}
-	if _, consumeError := p.consume(spec.RightParen, "exp )"); consumeError != nil {
+	if _, consumeError := p.consume(spec.RightParen, "Expect ')' after if condition."); consumeError != nil {
 		return nil, consumeError
 	}
 	// then branch
@@ -121,7 +124,27 @@ func (p *parser) ifStatement() (spec.Stmt, error) {
 	return stmt, nil
 }
 
-// MARK: Expressions
+func (p *parser) whileStatement() (spec.Stmt, error) {
+	// condition
+	if _, consumeError := p.consume(spec.LeftParen, "Expect '(' after 'while'."); consumeError != nil {
+		return nil, consumeError
+	}
+	condition, conditionError := p.expression()
+	if conditionError != nil {
+		return nil, conditionError
+	}
+	if _, consumeError := p.consume(spec.RightParen, "Expect ')' after condition."); consumeError != nil {
+		return nil, consumeError
+	}
+	// body
+	body, bodyError := p.statement()
+	if bodyError != nil {
+		return nil, bodyError
+	}
+	return spec.WhileStmt{Condition: condition, Body: body}, nil
+}
+
+// MARK: - Expressions
 
 func (p *parser) expression() (spec.Expr, error) {
 	return p.assignment()

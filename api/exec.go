@@ -69,3 +69,14 @@ func (ev *execVisitor) VisitIf(is spec.IfStmt) error {
 	}
 	return nil
 }
+
+func (ev *execVisitor) VisitWhile(ws spec.WhileStmt) error {
+	fulfiled, err := Eval(&ws.Condition, ev.env)
+	if err != nil { return err }
+	for isTruthy(fulfiled) {
+		ws.Body.Exec(ev)
+		fulfiled, err = Eval(&ws.Condition, ev.env)
+		if err != nil { return err }
+	}
+	return nil
+}
