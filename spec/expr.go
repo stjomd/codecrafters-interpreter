@@ -19,6 +19,7 @@ type ExprVisitor[R any, E error] interface {
 	VisitBinary(be BinaryExpr) (R, E)
 	VisitVariable(ve VariableExpr) (R, E)
 	VisitAssignment(ae AssignmentExpr) (R, E)
+	VisitLogical(le LogicalExpr) (R, E)
 }
 
 type LiteralExpr struct {
@@ -89,4 +90,16 @@ func (ae AssignmentExpr) String() string {
 }
 func (ae AssignmentExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
 	return evaluator.VisitAssignment(ae)
+}
+
+type LogicalExpr struct {
+	Left Expr
+	Opt Token
+	Right Expr
+}
+func (le LogicalExpr) String() string {
+	return fmt.Sprintf("(%v %v %v)", le.Opt.Lexeme, le.Left, le.Right)
+}
+func (le LogicalExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
+	return evaluator.VisitLogical(le)
 }

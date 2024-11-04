@@ -128,7 +128,7 @@ func (p *parser) expression() (spec.Expr, error) {
 }
 
 func (p *parser) assignment() (spec.Expr, error) {
-	expr, exprError := p.equality()
+	expr, exprError := p.or()
 	if exprError != nil { return nil, exprError }
 	if p.match(spec.Equal) {
 		value, valueError := p.assignment()
@@ -137,6 +137,30 @@ func (p *parser) assignment() (spec.Expr, error) {
 			identifier := expr.(spec.VariableExpr).Identifier
 			return spec.AssignmentExpr{Identifier: identifier, Expr: value}, nil
 		}
+	}
+	return expr, nil
+}
+
+func (p *parser) or() (spec.Expr, error) {
+	expr, exprError := p.and()
+	if exprError != nil { return nil, exprError }
+	for p.match(spec.Or) {
+		operator := p.previous()
+		rightExpr, rightExprError := p.and()
+		if rightExprError != nil { return nil, rightExprError }
+		expr = spec.LogicalExpr{Left: expr, Opt: operator, Right: rightExpr}
+	}
+	return expr, nil
+}
+
+func (p *parser) and() (spec.Expr, error) {
+	expr, exprError := p.equality()
+	if exprError != nil { return nil, exprError }
+	for p.match(spec.And) {
+		operator := p.previous()
+		rightExpr, rightExprError := p.equality()
+		if rightExprError != nil { return nil, rightExprError }
+		expr = spec.LogicalExpr{Left: expr, Opt: operator, Right: rightExpr}
 	}
 	return expr, nil
 }

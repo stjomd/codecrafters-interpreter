@@ -123,6 +123,18 @@ func (ev evalVisitor) VisitAssignment(ae spec.AssignmentExpr) (any, error) {
 	return value, nil
 }
 
+func (ev evalVisitor) VisitLogical(le spec.LogicalExpr) (any, error) {
+	left, leftError := le.Left.Eval(ev)
+	if leftError != nil { return nil, leftError }
+	// short circuit
+	if le.Opt.Type == spec.And && !isTruthy(left) {
+		return left, nil
+	} else if le.Opt.Type == spec.Or && isTruthy(left) {
+		return left, nil
+	}
+	return le.Right.Eval(ev)
+}
+
 
 // MARK: - Helpers
 
