@@ -17,9 +17,11 @@ func ParseStmts(tokens *[]spec.Token) ([]spec.Stmt, error) {
 	var statements []spec.Stmt
 	parser := parser{tokens: tokens, position: 0}
 	for parser.peek().Type != spec.EOF {
-		stmt, err := parser.declaration()
-		if err != nil { return nil, err }
-		statements = append(statements, stmt)
+		if stmt, err := parser.declaration(); err == nil {
+			statements = append(statements, stmt)
+		} else {
+			return nil, err
+		}
 	}
 	return statements, nil
 }
@@ -45,12 +47,15 @@ func (p *parser) varDeclaration() (spec.Stmt, error) {
 	if consumeError != nil { return nil, consumeError }
 	var expr spec.Expr = spec.LiteralExpr{Value: nil}
 	if p.match(spec.Equal) {
-		expression, expressionError := p.expression()
-		if expressionError != nil { return nil, expressionError }
-		expr = expression
+		if expression, err := p.expression(); err == nil {
+			expr = expression
+		} else {
+			return nil, err
+		}
 	}
-	_, consumeError = p.consume(spec.Semicolon, "Expect ';' after variable declaration")
-	if consumeError != nil { return nil, consumeError }
+	if _, err := p.consume(spec.Semicolon, "Expect ';' after variable declaration"); err != nil {
+		return nil, err
+	}
 	return spec.DeclareStmt{Identifier: identifier, Expr: expr}, nil
 }
 
@@ -71,43 +76,50 @@ func (p *parser) statement() (spec.Stmt, error) {
 
 func (p *parser) expressionStatement() (spec.Stmt, error) {
 	expr, err := p.expression()
-	if err != nil { return nil, err }
-	_, consumeError := p.consume(spec.Semicolon, "Expect ';' after value")
-	if consumeError != nil { return nil, consumeError }
+	if err != nil {
+		return nil, err
+	}
+	if _, err := p.consume(spec.Semicolon, "Expect ';' after value"); err != nil {
+		return nil, err
+	}
 	return spec.ExprStmt{Expr: expr}, nil
 }
 
 func (p *parser) printStatement() (spec.Stmt, error) {
 	expr, err := p.expression()
 	if err != nil { return nil, err }
-	_, consumeError := p.consume(spec.Semicolon, "Expect ';' after value")
-	if consumeError != nil { return nil, consumeError }
+	if _, err := p.consume(spec.Semicolon, "Expect ';' after value"); err != nil {
+		return nil, err
+	}
 	return spec.PrintStmt{Expr: expr}, nil
 }
 
 func (p *parser) blockStatement() (spec.Stmt, error) {
 	var statements []spec.Stmt
 	for !p.check(spec.RightBrace) && (p.peek().Type != spec.EOF) {
-		stmt, stmtError := p.declaration()
-		if stmtError != nil { return nil, stmtError }
-		statements = append(statements, stmt)
+		if stmt, err := p.declaration(); err == nil {
+			statements = append(statements, stmt)
+		} else {
+			return nil, err
+		}
 	}
-	_, consumeError := p.consume(spec.RightBrace, "Expect '}' after block")
-	if consumeError != nil { return nil, consumeError }
+	if _, err := p.consume(spec.RightBrace, "Expect '}' after block"); err != nil {
+		return nil, err
+	}
 	return spec.BlockStmt{Statements: statements}, nil
 }
 
 func (p *parser) ifStatement() (spec.Stmt, error) {
 	// condition
-	if _, consumeError := p.consume(spec.LeftParen, "Expect '(' after 'if'."); consumeError != nil {
-		return nil, consumeError
+	if _, err := p.consume(spec.LeftParen, "Expect '(' after 'if'."); err != nil {
+		return nil, err
 	}
 	condition, conditionError := p.expression()
 	if conditionError != nil {
 		return nil, conditionError
 	}
-	if _, consumeError := p.consume(spec.RightParen, "Expect ')' after if condition."); consumeError != nil {
-		return nil, consumeError
+	if _, err := p.consume(spec.RightParen, "Expect ')' after if condition."); err != nil {
+		return nil, err
 	}
 	// then branch
 	thenBranch, thenError := p.statement()
@@ -117,26 +129,26 @@ func (p *parser) ifStatement() (spec.Stmt, error) {
 	stmt := spec.IfStmt{Condition: condition, Then: thenBranch}
 	// (optional) else branch
 	if p.match(spec.Else) {
-		elseBranch, elseError := p.statement()
-		if elseError != nil {
-			return nil, elseError
+		if elseBranch, err := p.statement(); err == nil {
+			stmt.Else = elseBranch
+		} else {
+			return nil, err
 		}
-		stmt.Else = elseBranch
 	}
 	return stmt, nil
 }
 
 func (p *parser) whileStatement() (spec.Stmt, error) {
 	// condition
-	if _, consumeError := p.consume(spec.LeftParen, "Expect '(' after 'while'."); consumeError != nil {
-		return nil, consumeError
+	if _, err := p.consume(spec.LeftParen, "Expect '(' after 'while'."); err != nil {
+		return nil, err
 	}
 	condition, conditionError := p.expression()
 	if conditionError != nil {
 		return nil, conditionError
 	}
-	if _, consumeError := p.consume(spec.RightParen, "Expect ')' after condition."); consumeError != nil {
-		return nil, consumeError
+	if _, err := p.consume(spec.RightParen, "Expect ')' after condition."); err != nil {
+		return nil, err
 	}
 	// body
 	body, bodyError := p.statement()
@@ -147,8 +159,8 @@ func (p *parser) whileStatement() (spec.Stmt, error) {
 }
 
 func (p *parser) forStatement() (spec.Stmt, error) {
-	if _, consumeError := p.consume(spec.LeftParen, "Expect '(' after 'for'."); consumeError != nil {
-		return nil, consumeError
+	if _, err := p.consume(spec.LeftParen, "Expect '(' after 'for'."); err != nil {
+		return nil, err
 	}
 	// head - initializer
 	var init spec.Stmt
@@ -189,7 +201,9 @@ func (p *parser) forStatement() (spec.Stmt, error) {
 	p.consume(spec.RightParen, "Expect ')' after for clauses.");
 	// body
 	body, bodyError := p.statement()
-	if bodyError != nil { return nil, bodyError }
+	if bodyError != nil {
+		return nil, bodyError
+	}
 	// desugar to a while loop
 	return forLoopAsStatement(init, cond, incr, body), nil
 }
@@ -202,10 +216,14 @@ func (p *parser) expression() (spec.Expr, error) {
 
 func (p *parser) assignment() (spec.Expr, error) {
 	expr, exprError := p.or()
-	if exprError != nil { return nil, exprError }
+	if exprError != nil {
+		return nil, exprError
+	}
 	if p.match(spec.Equal) {
 		value, valueError := p.assignment()
-		if valueError != nil { return nil, valueError }
+		if valueError != nil {
+			return nil, valueError
+		}
 		if areTypesEqual(expr, spec.VariableExpr{}) {
 			identifier := expr.(spec.VariableExpr).Identifier
 			return spec.AssignmentExpr{Identifier: identifier, Expr: value}, nil
@@ -216,82 +234,108 @@ func (p *parser) assignment() (spec.Expr, error) {
 
 func (p *parser) or() (spec.Expr, error) {
 	expr, exprError := p.and()
-	if exprError != nil { return nil, exprError }
+	if exprError != nil {
+		return nil, exprError
+	}
 	for p.match(spec.Or) {
 		operator := p.previous()
-		rightExpr, rightExprError := p.and()
-		if rightExprError != nil { return nil, rightExprError }
-		expr = spec.LogicalExpr{Left: expr, Opt: operator, Right: rightExpr}
+		if rightExpr, err := p.and(); err == nil {
+			expr = spec.LogicalExpr{Left: expr, Opt: operator, Right: rightExpr}
+		} else {
+			return nil, err
+		}
 	}
 	return expr, nil
 }
 
 func (p *parser) and() (spec.Expr, error) {
 	expr, exprError := p.equality()
-	if exprError != nil { return nil, exprError }
+	if exprError != nil {
+		return nil, exprError
+	}
 	for p.match(spec.And) {
 		operator := p.previous()
-		rightExpr, rightExprError := p.equality()
-		if rightExprError != nil { return nil, rightExprError }
-		expr = spec.LogicalExpr{Left: expr, Opt: operator, Right: rightExpr}
+		if rightExpr, err := p.equality(); err == nil {
+			expr = spec.LogicalExpr{Left: expr, Opt: operator, Right: rightExpr}
+		} else {
+			return nil, err
+		}
 	}
 	return expr, nil
 }
 
 func (p *parser) equality() (spec.Expr, error) {
 	expr, exprError := p.comparison()
-	if exprError != nil { return nil, exprError }
+	if exprError != nil {
+		return nil, exprError
+	}
 	for p.match(spec.EqualEqual, spec.BangEqual) {
-		operation := p.previous()
-		right, rightError := p.comparison()
-		if rightError != nil { return nil, rightError }
-		expr = spec.BinaryExpr{Left: expr, Opt: operation, Right: right}
+		operator := p.previous()
+		if rightExpr, err := p.comparison(); err == nil {
+			expr = spec.BinaryExpr{Left: expr, Opt: operator, Right: rightExpr}
+		} else {
+			return nil, err
+		}
 	}
 	return expr, nil
 }
 
 func (p *parser) comparison() (spec.Expr, error) {
 	expr, exprError := p.term()
-	if exprError != nil { return nil, exprError }
+	if exprError != nil {
+		return nil, exprError
+	}
 	for p.match(spec.Less, spec.LessEqual, spec.Greater, spec.GreaterEqual) {
-		operation := p.previous()
-		right, rightError := p.term()
-		if rightError != nil { return nil, rightError }
-		expr = spec.BinaryExpr{Left: expr, Opt: operation, Right: right}
+		operator := p.previous()
+		if rightExpr, err := p.term(); err == nil {
+			expr = spec.BinaryExpr{Left: expr, Opt: operator, Right: rightExpr}
+		} else {
+			return nil, err
+		}
 	}
 	return expr, nil
 }
 
 func (p *parser) term() (spec.Expr, error) {
 	expr, exprError := p.factor()
-	if exprError != nil { return nil, exprError }
+	if exprError != nil {
+		return nil, exprError
+	}
 	for p.match(spec.Plus, spec.Minus) {
-		operation := p.previous()
-		right, rightError := p.factor()
-		if rightError != nil { return nil, rightError }
-		expr = spec.BinaryExpr{Left: expr, Opt: operation, Right: right}
+		operator := p.previous()
+		if rightExpr, err := p.factor(); err == nil {
+			expr = spec.BinaryExpr{Left: expr, Opt: operator, Right: rightExpr}
+		} else {
+			return nil, err
+		}
 	}
 	return expr, nil
 }
 
 func (p *parser) factor() (spec.Expr, error) {
 	expr, exprError := p.unary()
-	if exprError != nil { return nil, exprError }
+	if exprError != nil {
+		return nil, exprError
+	}
 	for p.match(spec.Slash, spec.Star) {
-		operation := p.previous()
-		right, rightError := p.unary()
-		if rightError != nil { return nil, rightError }
-		expr = spec.BinaryExpr{Left: expr, Opt: operation, Right: right}
+		operator := p.previous()
+		if rightExpr, err := p.unary(); err == nil {
+			expr = spec.BinaryExpr{Left: expr, Opt: operator, Right: rightExpr}
+		} else {
+			return nil, err
+		}
 	}
 	return expr, nil
 }
 
 func (p *parser) unary() (spec.Expr, error) {
 	if p.match(spec.Bang, spec.Minus) {
-		operation := p.previous()
-		expr, exprError := p.unary()
-		if exprError != nil { return nil, exprError }
-		return spec.UnaryExpr{Opt: operation, Expr: expr}, nil
+		operator := p.previous()
+		if expr, err := p.unary(); err == nil {
+			return spec.UnaryExpr{Opt: operator, Expr: expr}, nil
+		} else {
+			return nil, err
+		}
 	}
 	return p.primary()
 }
@@ -309,9 +353,12 @@ func (p *parser) primary() (spec.Expr, error) {
 		return spec.LiteralExpr{Value: p.previous().Literal}, nil
 	} else if p.match(spec.LeftParen) {
 		expr, exprError := p.expression()
-		if exprError != nil { return nil, exprError }
-		_, consumeError := p.consume(spec.RightParen, "Expect ')'")
-		if consumeError != nil { return nil, consumeError }
+		if exprError != nil {
+			return nil, exprError
+		}
+		if _, err := p.consume(spec.RightParen, "Expect ')'"); err != nil {
+			return nil, err
+		}
 		return spec.GroupingExpr{Expr: expr}, nil
 	}
 	message := fmt.Sprintf("[line %d] Error at '%v': Expect expression.", p.peek().Line, p.peek().Lexeme)
