@@ -110,9 +110,11 @@ func (ev evalVisitor) VisitBinary(be spec.BinaryExpr) (any, error) {
 }
 
 func (ev evalVisitor) VisitVariable(be spec.VariableExpr) (any, error) {
-	value, err := ev.env.get(be.Identifier.Lexeme)
-	if err != nil { return nil, runtimeError(err.Error(), be.Identifier.Line) }
-	return value, nil
+	if value, err := ev.env.get(be.Identifier.Lexeme); err == nil {
+		return value, nil
+	} else {
+		return nil, runtimeError(err.Error(), be.Identifier.Line)
+	}
 }
 
 func (ev evalVisitor) VisitAssignment(ae spec.AssignmentExpr) (any, error) {
