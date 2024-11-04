@@ -63,6 +63,8 @@ func (p *parser) statement() (spec.Stmt, error) {
 		return p.ifStatement()
 	} else if p.match(spec.While) {
 		return p.whileStatement()
+	} else if p.match(spec.For) {
+		return p.forStatement()
 	}
 	return p.expressionStatement()
 }
@@ -142,6 +144,69 @@ func (p *parser) whileStatement() (spec.Stmt, error) {
 		return nil, bodyError
 	}
 	return spec.WhileStmt{Condition: condition, Body: body}, nil
+}
+
+func (p *parser) forStatement() (spec.Stmt, error) {
+	if _, consumeError := p.consume(spec.LeftParen, "Expect '(' after 'for'."); consumeError != nil {
+		return nil, consumeError
+	}
+	// head - initializer
+	var init spec.Stmt
+	if p.match(spec.Semicolon) {
+		init = nil
+	} else if p.match(spec.Var) {
+		if initializer, err := p.varDeclaration(); err == nil {
+			init = initializer
+		} else {
+			return nil, err
+		}
+	} else {
+		if initializer, err := p.expressionStatement(); err == nil {
+			init = initializer
+		} else {
+			return nil, err
+		}
+	}
+	// head - condition
+	var cond spec.Expr
+	if !p.check(spec.Semicolon) {
+		if condition, err := p.expression(); err == nil {
+			cond = condition
+		} else {
+			return nil, err
+		}
+	}
+	p.consume(spec.Semicolon, "Expect ';' after loop condition.");
+	// head - increment
+	var incr spec.Expr
+	if !p.check(spec.RightParen) {
+		if increment, err := p.expression(); err == nil {
+			incr = increment
+		} else {
+			return nil, err
+		}
+	}
+	p.consume(spec.RightParen, "Expect ')' after for clauses.");
+	// body
+	body, bodyError := p.statement()
+	if bodyError != nil { return nil, bodyError }
+	// desugaring to a while loop
+	// for (init; cond; incr) body  -is the same as-  init; while cond { body; incr; }
+	whileLoop := spec.WhileStmt{
+		Condition: cond,
+		Body: spec.BlockStmt{
+			Statements: []spec.Stmt{
+				body,
+				spec.ExprStmt{Expr: incr},
+			},
+		},
+	};
+	var statements []spec.Stmt
+	if init != nil {
+		statements = append(statements, init)
+	}
+	statements = append(statements, whileLoop)
+	return spec.BlockStmt{Statements: statements}, nil
 }
 
 // MARK: - Expressions

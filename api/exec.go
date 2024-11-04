@@ -34,6 +34,7 @@ func (ev *execVisitor) VisitPrint(ps spec.PrintStmt) error {
 }
 
 func (ev *execVisitor) VisitExpr(es spec.ExprStmt) error {
+	if es.Expr == nil { return nil }
 	if _, evalError := Eval(&es.Expr, ev.env); evalError != nil {
 		return evalError
 	}
