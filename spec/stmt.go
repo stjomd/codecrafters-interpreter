@@ -5,11 +5,11 @@ type Stmt interface {
 }
 
 type StmtVisitor[R any] interface {
-	VisitPrint(printStmt PrintStmt) R
-	VisitExpr(exprStmt ExprStmt) R
-	VisitDeclare(declareStmt DeclareStmt) R
 	VisitBlock(blockStmt BlockStmt) R
+	VisitDeclare(declareStmt DeclareStmt) R
+	VisitExpr(exprStmt ExprStmt) R
 	VisitIf(ifStmt IfStmt) R
+	VisitPrint(printStmt PrintStmt) R
 	VisitWhile(whileStmt WhileStmt) R
 }
 

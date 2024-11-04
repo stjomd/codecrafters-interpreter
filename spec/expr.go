@@ -13,13 +13,13 @@ type Expr interface {
 }
 
 type ExprVisitor[R any, E error] interface {
-	VisitLiteral(le LiteralExpr) (R, E)
-	VisitGrouping(ge GroupingExpr) (R, E)
-	VisitUnary(ue UnaryExpr) (R, E)
-	VisitBinary(be BinaryExpr) (R, E)
-	VisitVariable(ve VariableExpr) (R, E)
-	VisitAssignment(ae AssignmentExpr) (R, E)
-	VisitLogical(le LogicalExpr) (R, E)
+	VisitAssignment(assignmentExpr AssignmentExpr) (R, E)
+	VisitBinary(binaryExpr BinaryExpr) (R, E)
+	VisitGrouping(groupingExpr GroupingExpr) (R, E)
+	VisitLiteral(literalExpr LiteralExpr) (R, E)
+	VisitLogical(logicalExpr LogicalExpr) (R, E)
+	VisitUnary(unaryExpr UnaryExpr) (R, E)
+	VisitVariable(variableExpr VariableExpr) (R, E)
 }
 
 type LiteralExpr struct {
