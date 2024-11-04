@@ -190,23 +190,8 @@ func (p *parser) forStatement() (spec.Stmt, error) {
 	// body
 	body, bodyError := p.statement()
 	if bodyError != nil { return nil, bodyError }
-	// desugaring to a while loop
-	// for (init; cond; incr) body  -is the same as-  init; while cond { body; incr; }
-	whileLoop := spec.WhileStmt{
-		Condition: cond,
-		Body: spec.BlockStmt{
-			Statements: []spec.Stmt{
-				body,
-				spec.ExprStmt{Expr: incr},
-			},
-		},
-	};
-	var statements []spec.Stmt
-	if init != nil {
-		statements = append(statements, init)
-	}
-	statements = append(statements, whileLoop)
-	return spec.BlockStmt{Statements: statements}, nil
+	// desugar to a while loop
+	return forLoopAsStatement(init, cond, incr, body), nil
 }
 
 // MARK: - Expressions
@@ -331,6 +316,28 @@ func (p *parser) primary() (spec.Expr, error) {
 	}
 	message := fmt.Sprintf("[line %d] Error at '%v': Expect expression.", p.peek().Line, p.peek().Lexeme)
 	return nil, errors.New(message)
+}
+
+// MARK: - Transformers
+
+func forLoopAsStatement(init spec.Stmt, cond spec.Expr, incr spec.Expr, body spec.Stmt) spec.Stmt {
+	// for (init; cond; incr) body
+	// init; while cond { body; incr; }
+	whileLoop := spec.WhileStmt{
+		Condition: cond,
+		Body: spec.BlockStmt{
+			Statements: []spec.Stmt{
+				body,
+				spec.ExprStmt{Expr: incr},
+			},
+		},
+	};
+	var statements []spec.Stmt
+	if init != nil {
+		statements = append(statements, init)
+	}
+	statements = append(statements, whileLoop)
+	return spec.BlockStmt{Statements: statements}
 }
 
 // MARK: - Helpers
