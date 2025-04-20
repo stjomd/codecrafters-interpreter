@@ -1,6 +1,8 @@
 package api
 
-import "errors"
+import (
+	"errors"
+)
 
 type environment struct {
 	parent *environment
@@ -8,7 +10,8 @@ type environment struct {
 }
 
 func newEnv() environment {
-	return environment{variables: make(map[string]any)}
+	globals := newGlobalsEnv()
+	return environment{parent: &globals, variables: make(map[string]any)}
 }
 
 func newEnvWithParent(parent *environment) environment {

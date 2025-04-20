@@ -137,6 +137,26 @@ func (ev evalVisitor) VisitLogical(le spec.LogicalExpr) (any, error) {
 	return le.Right.Eval(ev)
 }
 
+func (ev evalVisitor) VisitCall(ce spec.CallExpr) (any, error) {
+	callee, calleeError := ce.Callee.Eval(ev)
+	if calleeError != nil { return nil, calleeError }
+	args := []any{}
+	for _, arg := range ce.Args {
+		evaledArg, evalError := arg.Eval(ev)
+		if evalError != nil {
+			return nil, evalError
+		}
+		args = append(args, evaledArg)
+	}
+	function, castOk := callee.(Callable)
+	if !castOk {
+		return nil, errors.New("can only call functions and classes")
+	}
+	if len(args) != int(function.arity()) {
+		return nil, fmt.Errorf("expected %v arguments but got %v", function.arity(), len(args))
+	}
+	return function.call(ev, args), nil
+}
 
 // MARK: - Helpers
 

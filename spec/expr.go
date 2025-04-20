@@ -15,6 +15,7 @@ type Expr interface {
 type ExprVisitor[R any, E error] interface {
 	VisitAssignment(assignmentExpr AssignmentExpr) (R, E)
 	VisitBinary(binaryExpr BinaryExpr) (R, E)
+	VisitCall(callExpr CallExpr) (R, E)
 	VisitGrouping(groupingExpr GroupingExpr) (R, E)
 	VisitLiteral(literalExpr LiteralExpr) (R, E)
 	VisitLogical(logicalExpr LogicalExpr) (R, E)
@@ -102,4 +103,16 @@ func (le LogicalExpr) String() string {
 }
 func (le LogicalExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
 	return evaluator.VisitLogical(le)
+}
+
+type CallExpr struct {
+	Callee Expr
+	Paren Token
+	Args []Expr
+}
+func (ce CallExpr) String() string {
+	return fmt.Sprintf("%v(%v)", ce.Callee, ce.Args)
+}
+func (ce CallExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
+	return evaluator.VisitCall(ce)
 }
