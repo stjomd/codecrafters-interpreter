@@ -15,12 +15,13 @@ type Callable interface {
 
 type Function struct { // implements Callable
 	declaration spec.FuncStmt
+	closure *environment
 }
 func (f Function) arity() int {
 	return len(f.declaration.Params)
 }
 func (f Function) call(interpreter *interpreter, args []any) (any, error) {
-	subenv := newEnvWithParent(interpreter.env)
+	subenv := newEnvWithParent(f.closure)
 	interpreter.env = &subenv
 	defer func(){ interpreter.env = interpreter.env.parent }();
 
@@ -34,7 +35,7 @@ func (f Function) call(interpreter *interpreter, args []any) (any, error) {
 	} else if execError != nil {
 		return nil, execError
 	}
-	
+
 	return nil, nil
 }
 func (f Function) String() string {

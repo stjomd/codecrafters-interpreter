@@ -37,7 +37,7 @@ func (intp *interpreter) VisitBlock(bs spec.BlockStmt) error {
 	innerEnv := newEnvWithParent(intp.env)
 	intp.env = &innerEnv
 	defer func() { intp.env = outerEnv }()
-	
+
 	for _, stmt := range bs.Statements {
 		if err := stmt.Exec(intp); err != nil {
 			return err;
@@ -79,6 +79,7 @@ func (intp *interpreter) VisitFunc(fs spec.FuncStmt) error {
 		fs.Name.Lexeme,
 		Function {
 			declaration: fs,
+			closure: intp.env,
 		},
 	)
 	return nil
