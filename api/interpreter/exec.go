@@ -37,8 +37,9 @@ func (intp *interpreter) VisitBlock(bs spec.BlockStmt) error {
 	innerEnv := newEnvWithParent(intp.env)
 	intp.env = &innerEnv
 	for _, stmt := range bs.Statements {
-		err := stmt.Exec(intp)
-		if err != nil { return err }
+		if err := stmt.Exec(intp); err != nil {
+			return err;
+		}
 	}
 	intp.env = outerEnv
 	return nil
@@ -48,9 +49,13 @@ func (intp *interpreter) VisitIf(is spec.IfStmt) error {
 	condition, conditionError := is.Condition.Eval(intp)
 	if conditionError != nil { return conditionError }
 	if isTruthy(condition) {
-		is.Then.Exec(intp)
+		if err := is.Then.Exec(intp); err != nil {
+			return err
+		}
 	} else if is.Else != nil {
-		is.Else.Exec(intp)
+		if err := is.Else.Exec(intp); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -59,7 +64,9 @@ func (intp *interpreter) VisitWhile(ws spec.WhileStmt) error {
 	fulfiled, err := ws.Condition.Eval(intp)
 	if err != nil { return err }
 	for isTruthy(fulfiled) {
-		ws.Body.Exec(intp)
+		if err := ws.Body.Exec(intp); err != nil {
+			return err
+		}
 		fulfiled, err = ws.Condition.Eval(intp)
 		if err != nil { return err }
 	}
@@ -74,4 +81,15 @@ func (intp *interpreter) VisitFunc(fs spec.FuncStmt) error {
 		},
 	)
 	return nil
+}
+
+func (intp *interpreter) VisitReturn(rs spec.ReturnStmt) error {
+	if rs.Expr == nil {
+		return Return{value: nil}
+	}
+	value, evalError := rs.Expr.Eval(intp)
+	if evalError != nil {
+		return evalError
+	}
+	return Return{value: value}
 }

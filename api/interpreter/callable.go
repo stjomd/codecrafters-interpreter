@@ -11,6 +11,8 @@ type Callable interface {
 	call(interpreter *interpreter, args []any) any
 }
 
+// MARK: - Lox Functions
+
 type Function struct { // implements Callable
 	declaration spec.FuncStmt
 }
@@ -25,11 +27,17 @@ func (f Function) call(interpreter *interpreter, args []any) any {
 	for i, param := range f.declaration.Params {
 		interpreter.env.define(param.Lexeme, args[i])
 	}
-	return f.declaration.Body.Exec(interpreter)
+	result := f.declaration.Body.Exec(interpreter);
+	if returnValue, ok := result.(Return); ok {
+		return returnValue.value
+	}
+	return nil
 }
 func (f Function) String() string {
 	return fmt.Sprintf("<fn %v>", f.declaration.Name.Lexeme)
 }
+
+// MARK: - Native Functions
 
 type NativeFunction struct {
 	_name string
@@ -44,4 +52,16 @@ func (nf NativeFunction) call(interpreter *interpreter, args []any) any {
 }
 func (nf NativeFunction) String() string {
 	return fmt.Sprintf("<nat fn %v>", nf._name)
+}
+
+// MARK: - Return "Error"
+
+type Return struct {
+	value any
+}
+func (r Return) Error() string {
+	return fmt.Sprintf(
+		"error: this should not be an error! Some function is returning the value %v, but the runtime did not catch this.",
+		r.value,
+	)
 }

@@ -107,6 +107,8 @@ func (p *parser) statement() (spec.Stmt, error) {
 		return p.whileStatement()
 	} else if p.match(spec.For) {
 		return p.forStatement()
+	} else if p.match(spec.Return) {
+		return p.returnStatement()
 	}
 	return p.expressionStatement()
 }
@@ -243,6 +245,22 @@ func (p *parser) forStatement() (spec.Stmt, error) {
 	}
 	// desugar to a while loop
 	return forLoopAsStatement(init, cond, incr, body), nil
+}
+
+func (p *parser) returnStatement() (spec.Stmt, error) {
+	var keyword spec.Token = p.previous()
+	var expr spec.Expr = nil;
+	if !p.check(spec.Semicolon) {
+		returnExpr, returnError := p.expression()
+		if returnError != nil {
+			return nil, returnError
+		}
+		expr = returnExpr
+	}
+	if _, scError := p.consume(spec.Semicolon, "Expect ';' after return value"); scError != nil {
+		return nil, scError
+	}
+	return spec.ReturnStmt{Keyword: keyword, Expr: expr}, nil
 }
 
 // MARK: - Expressions
