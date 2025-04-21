@@ -1,7 +1,6 @@
 package interpreter
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -25,13 +24,13 @@ func (intp interpreter) VisitUnary(ue spec.UnaryExpr) (any, error) {
 		return !isTruthy(subvalue), nil
 	case spec.Minus:
 		if !isNumber(subvalue) {
-			return nil, runtimeError("Operand must be a number", ue.Opt.Line)
+			return nil, runtimeError{message: "Operand must be a number", line: ue.Opt.Line}
 		}
 		return -subvalue.(float64), nil
 	}
 	
 	message := fmt.Sprintf("Unexpected type of unary expression: %s", ue.Opt.Type.String())
-	return nil, runtimeError(message, ue.Opt.Line)
+	return nil, runtimeError{message: message, line: ue.Opt.Line}
 }
 
 func (intp interpreter) VisitBinary(be spec.BinaryExpr) (any, error) {
@@ -43,17 +42,17 @@ func (intp interpreter) VisitBinary(be spec.BinaryExpr) (any, error) {
 	switch be.Opt.Type {
 	case spec.Star:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeError(operandsMustBeNumbers, be.Opt.Line)
+			return nil, runtimeError{message: operandsMustBeNumbers, line: be.Opt.Line}
 		}
 		return leftValue.(float64) * rightValue.(float64), nil
 	case spec.Slash:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeError(operandsMustBeNumbers, be.Opt.Line)
+			return nil, runtimeError{message: operandsMustBeNumbers, line: be.Opt.Line}
 		}
 		return leftValue.(float64) / rightValue.(float64), nil
 	case spec.Minus:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeError(operandsMustBeNumbers, be.Opt.Line)
+			return nil, runtimeError{message: operandsMustBeNumbers, line: be.Opt.Line}
 		}
 		return leftValue.(float64) - rightValue.(float64), nil
 	case spec.Plus:
@@ -63,25 +62,25 @@ func (intp interpreter) VisitBinary(be spec.BinaryExpr) (any, error) {
 		if isString(leftValue) && isString(rightValue) {
 			return leftValue.(string) + rightValue.(string), nil
 		}
-		return nil, runtimeError("Operands must be two numbers or two strings", be.Opt.Line)
+		return nil, runtimeError{message: "Operands must be two numbers or two strings", line: be.Opt.Line}
 	case spec.Less:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeError(operandsMustBeNumbers, be.Opt.Line)
+			return nil, runtimeError{message: operandsMustBeNumbers, line: be.Opt.Line}
 		}
 		return leftValue.(float64) < rightValue.(float64), nil
 	case spec.LessEqual:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeError(operandsMustBeNumbers, be.Opt.Line)
+			return nil, runtimeError{message: operandsMustBeNumbers, line: be.Opt.Line}
 		}
 		return leftValue.(float64) <= rightValue.(float64), nil
 	case spec.Greater:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeError(operandsMustBeNumbers, be.Opt.Line)
+			return nil, runtimeError{message: operandsMustBeNumbers, line: be.Opt.Line}
 		}
 		return leftValue.(float64) > rightValue.(float64), nil
 	case spec.GreaterEqual:
 		if !isNumber(leftValue) || !isNumber(rightValue) {
-			return nil, runtimeError(operandsMustBeNumbers, be.Opt.Line)
+			return nil, runtimeError{message: operandsMustBeNumbers, line: be.Opt.Line}
 		}
 		return leftValue.(float64) >= rightValue.(float64), nil
 	case spec.EqualEqual:
@@ -91,22 +90,26 @@ func (intp interpreter) VisitBinary(be spec.BinaryExpr) (any, error) {
 	}
 
 	message := fmt.Sprintf("Unexpected type of binary expression: %s", be.Opt.Type.String())
-	return nil, runtimeError(message, be.Opt.Line)
+	return nil, runtimeError{message: message, line: be.Opt.Line}
 }
 
 func (intp interpreter) VisitVariable(be spec.VariableExpr) (any, error) {
 	if value, err := intp.env.get(be.Identifier.Lexeme); err == nil {
 		return value, nil
 	} else {
-		return nil, runtimeError(err.Error(), be.Identifier.Line)
+		return nil, runtimeError{message: err.Error(), line: be.Identifier.Line, cause: err}
 	}
 }
 
 func (intp interpreter) VisitAssignment(ae spec.AssignmentExpr) (any, error) {
 	value, evalError := ae.Expr.Eval(intp)
-	if evalError != nil { return nil, runtimeError(evalError.Error(), ae.Identifier.Line) }
+	if evalError != nil {
+		return nil, runtimeError{message: evalError.(runtimeError).message, line: ae.Identifier.Line, cause: evalError}
+	}
 	assignError := intp.env.assign(ae.Identifier.Lexeme, value)
-	if assignError != nil { return nil, runtimeError(assignError.Error(), ae.Identifier.Line) }
+	if assignError != nil { 
+		return nil, runtimeError{message: assignError.(runtimeError).message, line: ae.Identifier.Line, cause: assignError}
+	}
 	return value, nil
 }
 
@@ -135,20 +138,31 @@ func (intp interpreter) VisitCall(ce spec.CallExpr) (any, error) {
 	}
 	function, castOk := callee.(Callable)
 	if !castOk {
-		return nil, errors.New("can only call functions and classes")
+		return nil, runtimeError{message: "can only call functions and classes", line: ce.Paren.Line}
 	}
 	if len(args) != int(function.arity()) {
-		return nil, fmt.Errorf("expected %v arguments but got %v", function.arity(), len(args))
+		msg := fmt.Sprintf("expected %v arguments but got %v", function.arity(), len(args))
+		return nil, runtimeError{message: msg, line: ce.Paren.Line}
 	}
-	return function.call(&intp, args), nil
+	return function.call(&intp, args)
 }
 
 // MARK: - Helpers
 
 const operandsMustBeNumbers = "Operands must be numbers"
-func runtimeError(message string, line uint64) error {
-	errorMessage := fmt.Sprintf("%s.\n[line %d]", message, line)
-	return errors.New(errorMessage)
+
+type runtimeError struct {
+	message string
+	line uint64
+	cause error
+}
+func (re runtimeError) Error() string {
+	return fmt.Sprintf("%s.\n[line %d]", re.message, re.line)
+	// if re.cause != nil {
+	// 	return fmt.Sprintf("%s.\n[line %d]\n- caused by: %v", re.message, re.line, re.cause)
+	// } else {
+	// 	return fmt.Sprintf("%s.\n[line %d]", re.message, re.line)
+	// }
 }
 
 func isTruthy(value any) bool {

@@ -36,12 +36,13 @@ func (intp *interpreter) VisitBlock(bs spec.BlockStmt) error {
 	outerEnv := intp.env
 	innerEnv := newEnvWithParent(intp.env)
 	intp.env = &innerEnv
+	defer func() { intp.env = outerEnv }()
+	
 	for _, stmt := range bs.Statements {
 		if err := stmt.Exec(intp); err != nil {
 			return err;
 		}
 	}
-	intp.env = outerEnv
 	return nil
 }
 

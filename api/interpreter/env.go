@@ -29,7 +29,7 @@ func (env *environment) assign(name string, value any) error {
 	if env.parent != nil {
 		return env.parent.assign(name, value)
 	}
-	return nil
+	return errors.New("Undefined variable '" + name + "'")
 }
 
 func (env *environment) get(name string) (any, error) {
