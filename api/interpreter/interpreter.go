@@ -11,15 +11,15 @@ func NewInterpreter() interpreter {
 	return interpreter{env: &env}
 }
 
-func (itp *interpreter) Interpret(statements *[]spec.Stmt) error {
+func (intp *interpreter) Interpret(statements *[]spec.Stmt) error {
 	for _, stmt := range *statements {
-		if err := stmt.Exec(itp); err != nil {
+		if err := stmt.Exec(intp); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (itp *interpreter) Evaluate(expr *spec.Expr) (any, error) {
-	return (*expr).Eval(itp)
+func (intp *interpreter) Evaluate(expr *spec.Expr) (any, error) {
+	return (*expr).Eval(intp)
 }

@@ -8,16 +8,16 @@ import (
 	"github.com/codecrafters-io/interpreter-starter-go/spec"
 )
 
-func (ev interpreter) VisitLiteral(le spec.LiteralExpr) (any, error) {
+func (intp interpreter) VisitLiteral(le spec.LiteralExpr) (any, error) {
 	return le.Value, nil
 }
 
-func (ev interpreter) VisitGrouping(ge spec.GroupingExpr) (any, error) {
-	return ge.Expr.Eval(ev)
+func (intp interpreter) VisitGrouping(ge spec.GroupingExpr) (any, error) {
+	return ge.Expr.Eval(intp)
 }
 
-func (ev interpreter) VisitUnary(ue spec.UnaryExpr) (any, error) {
-	subvalue, suberror := ue.Expr.Eval(ev)
+func (intp interpreter) VisitUnary(ue spec.UnaryExpr) (any, error) {
+	subvalue, suberror := ue.Expr.Eval(intp)
 	if suberror != nil { return nil, suberror }
 
 	switch ue.Opt.Type {
@@ -34,9 +34,9 @@ func (ev interpreter) VisitUnary(ue spec.UnaryExpr) (any, error) {
 	return nil, runtimeError(message, ue.Opt.Line)
 }
 
-func (ev interpreter) VisitBinary(be spec.BinaryExpr) (any, error) {
-	leftValue, leftError := be.Left.Eval(ev)
-	rightValue, rightError := be.Right.Eval(ev)
+func (intp interpreter) VisitBinary(be spec.BinaryExpr) (any, error) {
+	leftValue, leftError := be.Left.Eval(intp)
+	rightValue, rightError := be.Right.Eval(intp)
 	if leftError != nil { return nil, leftError }
 	if rightError != nil { return nil, rightError }
 
@@ -94,24 +94,24 @@ func (ev interpreter) VisitBinary(be spec.BinaryExpr) (any, error) {
 	return nil, runtimeError(message, be.Opt.Line)
 }
 
-func (ev interpreter) VisitVariable(be spec.VariableExpr) (any, error) {
-	if value, err := ev.env.get(be.Identifier.Lexeme); err == nil {
+func (intp interpreter) VisitVariable(be spec.VariableExpr) (any, error) {
+	if value, err := intp.env.get(be.Identifier.Lexeme); err == nil {
 		return value, nil
 	} else {
 		return nil, runtimeError(err.Error(), be.Identifier.Line)
 	}
 }
 
-func (ev interpreter) VisitAssignment(ae spec.AssignmentExpr) (any, error) {
-	value, evalError := ae.Expr.Eval(ev)
+func (intp interpreter) VisitAssignment(ae spec.AssignmentExpr) (any, error) {
+	value, evalError := ae.Expr.Eval(intp)
 	if evalError != nil { return nil, runtimeError(evalError.Error(), ae.Identifier.Line) }
-	assignError := ev.env.assign(ae.Identifier.Lexeme, value)
+	assignError := intp.env.assign(ae.Identifier.Lexeme, value)
 	if assignError != nil { return nil, runtimeError(assignError.Error(), ae.Identifier.Line) }
 	return value, nil
 }
 
-func (ev interpreter) VisitLogical(le spec.LogicalExpr) (any, error) {
-	left, leftError := le.Left.Eval(ev)
+func (intp interpreter) VisitLogical(le spec.LogicalExpr) (any, error) {
+	left, leftError := le.Left.Eval(intp)
 	if leftError != nil { return nil, leftError }
 	// short circuit
 	if le.Opt.Type == spec.And && !isTruthy(left) {
@@ -119,15 +119,15 @@ func (ev interpreter) VisitLogical(le spec.LogicalExpr) (any, error) {
 	} else if le.Opt.Type == spec.Or && isTruthy(left) {
 		return left, nil
 	}
-	return le.Right.Eval(ev)
+	return le.Right.Eval(intp)
 }
 
-func (ev interpreter) VisitCall(ce spec.CallExpr) (any, error) {
-	callee, calleeError := ce.Callee.Eval(ev)
+func (intp interpreter) VisitCall(ce spec.CallExpr) (any, error) {
+	callee, calleeError := ce.Callee.Eval(intp)
 	if calleeError != nil { return nil, calleeError }
 	args := []any{}
 	for _, arg := range ce.Args {
-		evaledArg, evalError := arg.Eval(ev)
+		evaledArg, evalError := arg.Eval(intp)
 		if evalError != nil {
 			return nil, evalError
 		}
@@ -140,7 +140,7 @@ func (ev interpreter) VisitCall(ce spec.CallExpr) (any, error) {
 	if len(args) != int(function.arity()) {
 		return nil, fmt.Errorf("expected %v arguments but got %v", function.arity(), len(args))
 	}
-	return function.call(&ev, args), nil
+	return function.call(&intp, args), nil
 }
 
 // MARK: - Helpers
