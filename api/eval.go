@@ -8,30 +8,15 @@ import (
 	"github.com/codecrafters-io/interpreter-starter-go/spec"
 )
 
-func EvalWithoutEnv(expr *spec.Expr) (any, error) {
-	env := newEnv()
-	return (*expr).Eval(evalVisitor{env: &env})
-}
-
-func Eval(expr *spec.Expr, env *environment) (any, error) {
-	return (*expr).Eval(evalVisitor{env: env})
-}
-
-// MARK: - Evaluation using visitor pattern
-
-type evalVisitor struct { // implements spec.Visitor
-	env *environment
-}
-
-func (ev evalVisitor) VisitLiteral(le spec.LiteralExpr) (any, error) {
+func (ev interpreter) VisitLiteral(le spec.LiteralExpr) (any, error) {
 	return le.Value, nil
 }
 
-func (ev evalVisitor) VisitGrouping(ge spec.GroupingExpr) (any, error) {
+func (ev interpreter) VisitGrouping(ge spec.GroupingExpr) (any, error) {
 	return ge.Expr.Eval(ev)
 }
 
-func (ev evalVisitor) VisitUnary(ue spec.UnaryExpr) (any, error) {
+func (ev interpreter) VisitUnary(ue spec.UnaryExpr) (any, error) {
 	subvalue, suberror := ue.Expr.Eval(ev)
 	if suberror != nil { return nil, suberror }
 
@@ -49,7 +34,7 @@ func (ev evalVisitor) VisitUnary(ue spec.UnaryExpr) (any, error) {
 	return nil, runtimeError(message, ue.Opt.Line)
 }
 
-func (ev evalVisitor) VisitBinary(be spec.BinaryExpr) (any, error) {
+func (ev interpreter) VisitBinary(be spec.BinaryExpr) (any, error) {
 	leftValue, leftError := be.Left.Eval(ev)
 	rightValue, rightError := be.Right.Eval(ev)
 	if leftError != nil { return nil, leftError }
@@ -109,7 +94,7 @@ func (ev evalVisitor) VisitBinary(be spec.BinaryExpr) (any, error) {
 	return nil, runtimeError(message, be.Opt.Line)
 }
 
-func (ev evalVisitor) VisitVariable(be spec.VariableExpr) (any, error) {
+func (ev interpreter) VisitVariable(be spec.VariableExpr) (any, error) {
 	if value, err := ev.env.get(be.Identifier.Lexeme); err == nil {
 		return value, nil
 	} else {
@@ -117,7 +102,7 @@ func (ev evalVisitor) VisitVariable(be spec.VariableExpr) (any, error) {
 	}
 }
 
-func (ev evalVisitor) VisitAssignment(ae spec.AssignmentExpr) (any, error) {
+func (ev interpreter) VisitAssignment(ae spec.AssignmentExpr) (any, error) {
 	value, evalError := ae.Expr.Eval(ev)
 	if evalError != nil { return nil, runtimeError(evalError.Error(), ae.Identifier.Line) }
 	assignError := ev.env.assign(ae.Identifier.Lexeme, value)
@@ -125,7 +110,7 @@ func (ev evalVisitor) VisitAssignment(ae spec.AssignmentExpr) (any, error) {
 	return value, nil
 }
 
-func (ev evalVisitor) VisitLogical(le spec.LogicalExpr) (any, error) {
+func (ev interpreter) VisitLogical(le spec.LogicalExpr) (any, error) {
 	left, leftError := le.Left.Eval(ev)
 	if leftError != nil { return nil, leftError }
 	// short circuit
@@ -137,7 +122,7 @@ func (ev evalVisitor) VisitLogical(le spec.LogicalExpr) (any, error) {
 	return le.Right.Eval(ev)
 }
 
-func (ev evalVisitor) VisitCall(ce spec.CallExpr) (any, error) {
+func (ev interpreter) VisitCall(ce spec.CallExpr) (any, error) {
 	callee, calleeError := ce.Callee.Eval(ev)
 	if calleeError != nil { return nil, calleeError }
 	args := []any{}
@@ -155,7 +140,7 @@ func (ev evalVisitor) VisitCall(ce spec.CallExpr) (any, error) {
 	if len(args) != int(function.arity()) {
 		return nil, fmt.Errorf("expected %v arguments but got %v", function.arity(), len(args))
 	}
-	return function.call(nil, args), nil // TODO: unite exec and eval
+	return function.call(&ev, args), nil
 }
 
 // MARK: - Helpers

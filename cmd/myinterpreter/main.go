@@ -37,7 +37,8 @@ func runCommand(input *string) {
 	handleErrors(tokenizeErrors, 65)
 	statements, parseError := api.ParseStmts(&tokens)
 	handleError(parseError, 65)
-	execError := api.Exec(&statements)
+	interpreter := api.NewInterpreter()
+	execError := interpreter.Interpret(&statements)
 	handleError(execError, 70)
 }
 
@@ -46,7 +47,8 @@ func evaluateCommand(input *string) {
 	handleErrors(tokenizeErrors, 65)
 	expr, parseError := api.ParseExpr(&tokens)
 	handleError(parseError, 65)
-	value, evalError := api.EvalWithoutEnv(&expr)
+	interpreter := api.NewInterpreter()
+	value, evalError := interpreter.Evaluate(&expr)
 	handleError(evalError, 70)
 	if value == nil {
 		fmt.Println("nil")

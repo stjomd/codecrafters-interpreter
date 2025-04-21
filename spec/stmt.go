@@ -1,5 +1,7 @@
 package spec
 
+import "fmt"
+
 type Stmt interface {
 	Exec(executor StmtVisitor[error]) error
 }
@@ -19,6 +21,9 @@ type PrintStmt struct {
 }
 func (ps PrintStmt) Exec(executor StmtVisitor[error]) error {
 	return executor.VisitPrint(ps)
+}
+func (ps PrintStmt) String() string {
+	return fmt.Sprintf("(print %v)", ps.Expr)
 }
 
 type ExprStmt struct {

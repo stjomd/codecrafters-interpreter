@@ -1,10 +1,14 @@
 package api
 
-import "github.com/codecrafters-io/interpreter-starter-go/spec"
+import (
+	"fmt"
+
+	"github.com/codecrafters-io/interpreter-starter-go/spec"
+)
 
 type Callable interface {
 	arity() int
-	call(execVisitor spec.StmtVisitor[error], args []any) any
+	call(interpreter *interpreter, args []any) any
 }
 
 type Function struct { // implements Callable
@@ -13,21 +17,28 @@ type Function struct { // implements Callable
 func (f Function) arity() int {
 	return len(f.declaration.Params)
 }
-func (f Function) call(executor spec.StmtVisitor[error], args []any) any {
+func (f Function) call(interpreter *interpreter, args []any) any {
 	env := newEnv()
 	for i, param := range f.declaration.Params {
 		env.define(param.Lexeme, args[i])
 	}
-	return f.declaration.Exec(executor)
+	return f.declaration.Body.Exec(interpreter)
+}
+func (f Function) String() string {
+	return fmt.Sprintf("<fn %v>", f.declaration.Name.Lexeme)
 }
 
 type NativeFunction struct {
+	_name string
 	_arity int
 	_func func(args []any) any
 }
 func (nf NativeFunction) arity() int {
 	return nf._arity
 }
-func (nf NativeFunction) call(executor spec.StmtVisitor[error], args []any) any {
+func (nf NativeFunction) call(interpreter *interpreter, args []any) any {
 	return nf._func(args)
+}
+func (nf NativeFunction) String() string {
+	return fmt.Sprintf("<nat fn %v>", nf._name)
 }
