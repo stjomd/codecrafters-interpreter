@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/codecrafters-io/interpreter-starter-go/spec"
 )
@@ -11,11 +12,20 @@ func (intp *interpreter) VisitPrint(ps spec.PrintStmt) error {
 	if evalError != nil { return evalError }
 	if value == nil {
 		fmt.Println("nil")
+	} else if reflect.TypeOf(value).Kind() == reflect.Float64 {
+		fmt.Println(float64ToString(value.(float64)))
 	} else {
 		fmt.Println(value)
 	}
 	return nil
 }
+func float64ToString(number float64) string {
+	if number == float64(int(number)) {
+		return fmt.Sprintf("%.0f", number)
+	}
+	return fmt.Sprintf("%g", number)
+}
+
 
 func (intp *interpreter) VisitExpr(es spec.ExprStmt) error {
 	if es.Expr == nil { return nil }
