@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/codecrafters-io/interpreter-starter-go/api"
-	intp "github.com/codecrafters-io/interpreter-starter-go/api/interpreter"
 )
 
 func main() {
@@ -38,8 +37,7 @@ func runCommand(input *string) {
 	handleErrors(tokenizeErrors, 65)
 	statements, parseError := api.ParseStmts(&tokens)
 	handleError(parseError, 65)
-	interpreter := intp.NewInterpreter()
-	execError := interpreter.Interpret(&statements)
+	execError := api.Exec(&statements)
 	handleError(execError, 70)
 }
 
@@ -48,8 +46,7 @@ func evaluateCommand(input *string) {
 	handleErrors(tokenizeErrors, 65)
 	expr, parseError := api.ParseExpr(&tokens)
 	handleError(parseError, 65)
-	interpreter := intp.NewInterpreter()
-	value, evalError := interpreter.Evaluate(&expr)
+	value, evalError := api.Eval(&expr)
 	handleError(evalError, 70)
 	if value == nil {
 		fmt.Println("nil")
