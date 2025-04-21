@@ -7,7 +7,8 @@ type interpreter struct { // implements spec.ExprVisitor[any, error], spec.StmtV
 }
 
 func NewInterpreter() interpreter {
-	env := newEnv()
+	globals := newGlobalsEnv()
+	env := newEnvWithParent(&globals)
 	return interpreter{env: &env}
 }
 

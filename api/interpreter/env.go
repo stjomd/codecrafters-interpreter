@@ -10,8 +10,7 @@ type environment struct {
 }
 
 func newEnv() environment {
-	globals := newGlobalsEnv()
-	return environment{parent: &globals, variables: make(map[string]any)}
+	return environment{variables: make(map[string]any)}
 }
 
 func newEnvWithParent(parent *environment) environment {

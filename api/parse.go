@@ -54,6 +54,18 @@ func (p *parser) funcDeclaration() (spec.Stmt, error) {
 		return nil, parenError
 	}
 	params := []spec.Token{}
+	if !p.check(spec.RightParen) {
+		for next := true; next; next = p.match(spec.Comma) {
+			if len(params) >= 255 {
+				return nil, fmt.Errorf("can't have more than 255 parameters")
+			}
+			param, paramError := p.consume(spec.Identifier, "Expect parameter name")
+			if paramError != nil {
+				return nil, paramError
+			}
+			params = append(params, param)
+		}
+	}
 	if _, parenError := p.consume(spec.RightParen, "Expect ')' after parameters"); parenError != nil {
 		return nil, parenError
 	}
@@ -387,12 +399,15 @@ func (p *parser) call() (spec.Expr, error) {
 func (p *parser) finishCall(callee spec.Expr) (spec.Expr, error) {
 	args := []spec.Expr{};
 	if !p.check(spec.RightParen) {
-		for p.match(spec.Comma) { // TODO: to do-while
-			subexpr, _ := p.expression()
+		for next := true; next; next = p.match(spec.Comma) {
 			if len(args) >= 255 {
-				return nil, errors.New("can't have more than 255 arguments")
+				return nil, fmt.Errorf("can't have more than 255 arguments")
 			}
-			args = append(args, subexpr)
+			arg, argError := p.expression()
+			if argError != nil {
+				return nil, argError
+			}
+			args = append(args, arg)
 		}
 	}
 	paren, parenError := p.consume(spec.RightParen, "Expect ')' after arguments")

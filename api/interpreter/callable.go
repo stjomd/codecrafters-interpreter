@@ -18,9 +18,12 @@ func (f Function) arity() int {
 	return len(f.declaration.Params)
 }
 func (f Function) call(interpreter *interpreter, args []any) any {
-	env := newEnv()
+	subenv := newEnvWithParent(interpreter.env)
+	interpreter.env = &subenv
+	defer func(){ interpreter.env = interpreter.env.parent }();
+
 	for i, param := range f.declaration.Params {
-		env.define(param.Lexeme, args[i])
+		interpreter.env.define(param.Lexeme, args[i])
 	}
 	return f.declaration.Body.Exec(interpreter)
 }

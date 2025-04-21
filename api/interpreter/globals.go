@@ -5,9 +5,9 @@ import (
 )
 
 func newGlobalsEnv() environment {
-	env := environment{variables: make(map[string]any)}
+	env := newEnv()
 	for _, fn := range nativeFunctions {
-		env.variables[fn._name] = fn
+		env.define(fn._name, fn)
 	}
 	return env
 }

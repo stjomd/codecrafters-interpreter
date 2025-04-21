@@ -67,10 +67,11 @@ func (intp *interpreter) VisitWhile(ws spec.WhileStmt) error {
 }
 
 func (intp *interpreter) VisitFunc(fs spec.FuncStmt) error {
-	function := Function{declaration: fs}
 	intp.env.define(
 		fs.Name.Lexeme,
-		function,
+		Function {
+			declaration: fs,
+		},
 	)
 	return nil
 }
