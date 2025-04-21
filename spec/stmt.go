@@ -8,6 +8,7 @@ type StmtVisitor[R any] interface {
 	VisitBlock(blockStmt BlockStmt) R
 	VisitDeclare(declareStmt DeclareStmt) R
 	VisitExpr(exprStmt ExprStmt) R
+	VisitFunc(funcStmt FuncStmt) R
 	VisitIf(ifStmt IfStmt) R
 	VisitPrint(printStmt PrintStmt) R
 	VisitWhile(whileStmt WhileStmt) R
@@ -57,4 +58,13 @@ type WhileStmt struct {
 }
 func (ws WhileStmt) Exec(executor StmtVisitor[error]) error {
 	return executor.VisitWhile(ws)
+}
+
+type FuncStmt struct {
+	Name Token
+	Params []Token
+	Body BlockStmt
+}
+func (fs FuncStmt) Exec(executor StmtVisitor[error]) error {
+	return executor.VisitFunc(fs)
 }

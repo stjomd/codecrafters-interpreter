@@ -25,6 +25,7 @@ func (env *environment) define(name string, value any) {
 func (env *environment) assign(name string, value any) error {
 	if _, isPresent := env.variables[name]; isPresent {
 		env.variables[name] = value
+		return nil
 	}
 	if env.parent != nil {
 		return env.parent.assign(name, value)

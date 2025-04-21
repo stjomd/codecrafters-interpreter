@@ -36,10 +36,35 @@ type parser struct {
 // MARK: Statements
 
 func (p *parser) declaration() (spec.Stmt, error) {
+	if (p.match(spec.Fun)) {
+		return p.funcDeclaration()
+	}
 	if (p.match(spec.Var)) {
 		return p.varDeclaration() 
 	}
 	return p.statement()
+}
+
+func (p *parser) funcDeclaration() (spec.Stmt, error) {
+	name, nameError := p.consume(spec.Identifier, "Expect function name")
+	if nameError != nil {
+		return nil, nameError
+	}
+	if _, parenError := p.consume(spec.LeftParen, "Expect '(' after function name"); parenError != nil {
+		return nil, parenError
+	}
+	params := []spec.Token{}
+	if _, parenError := p.consume(spec.RightParen, "Expect ')' after parameters"); parenError != nil {
+		return nil, parenError
+	}
+	if _, braceError := p.consume(spec.LeftBrace, "Expect '{' before body"); braceError != nil {
+		return nil, braceError
+	}
+	body, bodyError := p.blockStatement()
+	if bodyError != nil {
+		return nil, bodyError
+	}
+	return spec.FuncStmt{Name: name, Params: params, Body: body.(spec.BlockStmt)}, nil
 }
 
 func (p *parser) varDeclaration() (spec.Stmt, error) {
@@ -362,7 +387,7 @@ func (p *parser) call() (spec.Expr, error) {
 func (p *parser) finishCall(callee spec.Expr) (spec.Expr, error) {
 	args := []spec.Expr{};
 	if !p.check(spec.RightParen) {
-		for p.match(spec.Comma) {
+		for p.match(spec.Comma) { // TODO: to do-while
 			subexpr, _ := p.expression()
 			if len(args) >= 255 {
 				return nil, errors.New("can't have more than 255 arguments")
@@ -370,7 +395,7 @@ func (p *parser) finishCall(callee spec.Expr) (spec.Expr, error) {
 			args = append(args, subexpr)
 		}
 	}
-	paren, parenError := p.consume(spec.RightParen, "Expect ')' after arguments.")
+	paren, parenError := p.consume(spec.RightParen, "Expect ')' after arguments")
 	if parenError != nil {
 		return nil, parenError
 	}

@@ -155,7 +155,7 @@ func (ev evalVisitor) VisitCall(ce spec.CallExpr) (any, error) {
 	if len(args) != int(function.arity()) {
 		return nil, fmt.Errorf("expected %v arguments but got %v", function.arity(), len(args))
 	}
-	return function.call(ev, args), nil
+	return function.call(nil, args), nil // TODO: unite exec and eval
 }
 
 // MARK: - Helpers

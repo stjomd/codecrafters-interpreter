@@ -1,16 +1,24 @@
 package api
 
-import "time"
+import (
+	"time"
+)
 
 func newGlobalsEnv() environment {
 	return environment{variables: globals}
 }
 
 var globals = map[string]any{
-	"clock": Callable{
+	"clock": NativeFunction {
 		_arity: 0,
-		_func: func(ev evalVisitor, args []any) any {
+		_func: func(args []any) any {
 			return float64(time.Now().Unix())
+		},
+	},
+	"echo": NativeFunction {
+		_arity: 1,
+		_func: func(args []any) any {
+			return args[0]
 		},
 	},
 }
