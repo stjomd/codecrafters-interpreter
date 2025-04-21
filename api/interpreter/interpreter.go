@@ -1,4 +1,4 @@
-package api
+package interpreter
 
 import "github.com/codecrafters-io/interpreter-starter-go/spec"
 
