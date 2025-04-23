@@ -8,7 +8,7 @@ import (
 
 type Callable interface {
 	arity() int
-	call(interpreter *interpreter, args []any) (any, error)
+	call(interpreter *Interpreter, args []any) (any, error)
 }
 
 // MARK: - Lox Functions
@@ -20,10 +20,11 @@ type Function struct { // implements Callable
 func (f Function) arity() int {
 	return len(f.declaration.Params)
 }
-func (f Function) call(interpreter *interpreter, args []any) (any, error) {
+func (f Function) call(interpreter *Interpreter, args []any) (any, error) {
+	origEnv := interpreter.env
 	subenv := newEnvWithParent(f.closure)
 	interpreter.env = &subenv
-	defer func(){ interpreter.env = interpreter.env.parent }();
+	defer func(){ interpreter.env = origEnv }();
 
 	for i, param := range f.declaration.Params {
 		interpreter.env.define(param.Lexeme, args[i])
@@ -52,7 +53,7 @@ type NativeFunction struct {
 func (nf NativeFunction) arity() int {
 	return nf._arity
 }
-func (nf NativeFunction) call(interpreter *interpreter, args []any) (any, error) {
+func (nf NativeFunction) call(interpreter *Interpreter, args []any) (any, error) {
 	return nf._func(args), nil
 }
 func (nf NativeFunction) String() string {

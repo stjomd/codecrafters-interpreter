@@ -2,6 +2,7 @@ package spec
 
 import (
 	"fmt"
+	"hash/fnv"
 	"reflect"
 )
 
@@ -190,6 +191,12 @@ func (token Token) String() string {
 		literalString = fmt.Sprintf("%v", token.Literal)
 	}
 	return fmt.Sprintf("%v %v %v", token.Type.String(), token.Lexeme, literalString)
+}
+func (token Token) Hash() uint64 {
+	hash := fnv.New64()
+	hash.Write([]byte(token.String()))
+	hash.Write(bytify(token.Line))
+	return hash.Sum64()
 }
 
 func float64ToString(number float64) string {

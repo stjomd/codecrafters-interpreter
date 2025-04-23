@@ -32,6 +32,10 @@ func (env *environment) assign(name string, value any) error {
 	return errors.New("Undefined variable '" + name + "'")
 }
 
+func (env *environment) assignAt(distance int, name string, value any) error {
+	return env.ancestor(distance).assign(name, value)
+}
+
 func (env *environment) get(name string) (any, error) {
 	value, isPresent := env.variables[name]
 	if isPresent {
@@ -41,4 +45,24 @@ func (env *environment) get(name string) (any, error) {
 		return env.parent.get(name)
 	}
 	return nil, errors.New("Undefined variable '" + name + "'")
+}
+
+func (env *environment) getAt(distance int, name string) (any, error) {
+	return env.ancestor(distance).get(name)
+}
+
+func (env *environment) getGlobalsEnv() *environment {
+	current := env
+	for current.parent != nil {
+		current = current.parent
+	}
+	return current
+}
+
+func (env *environment) ancestor(distance int) *environment {
+	current := env
+	for range distance {
+		current = current.parent
+	}
+	return current
 }

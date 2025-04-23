@@ -37,7 +37,10 @@ func runCommand(input *string) {
 	handleErrors(tokenizeErrors, 65)
 	statements, parseError := api.ParseStmts(&tokens)
 	handleError(parseError, 65)
-	execError := api.Exec(&statements)
+	
+	intp := api.NewInterpreter()
+	api.ResolveWithIntp(&intp, &statements)
+	execError := api.ExecWithIntp(&intp, &statements)
 	handleError(execError, 70)
 }
 

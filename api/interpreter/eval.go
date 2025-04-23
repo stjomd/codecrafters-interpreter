@@ -7,15 +7,15 @@ import (
 	"github.com/codecrafters-io/interpreter-starter-go/spec"
 )
 
-func (intp interpreter) VisitLiteral(le spec.LiteralExpr) (any, error) {
+func (intp *Interpreter) VisitLiteral(le spec.LiteralExpr) (any, error) {
 	return le.Value, nil
 }
 
-func (intp interpreter) VisitGrouping(ge spec.GroupingExpr) (any, error) {
+func (intp *Interpreter) VisitGrouping(ge spec.GroupingExpr) (any, error) {
 	return ge.Expr.Eval(intp)
 }
 
-func (intp interpreter) VisitUnary(ue spec.UnaryExpr) (any, error) {
+func (intp *Interpreter) VisitUnary(ue spec.UnaryExpr) (any, error) {
 	subvalue, suberror := ue.Expr.Eval(intp)
 	if suberror != nil { return nil, suberror }
 
@@ -33,7 +33,7 @@ func (intp interpreter) VisitUnary(ue spec.UnaryExpr) (any, error) {
 	return nil, runtimeError{message: message, line: ue.Opt.Line}
 }
 
-func (intp interpreter) VisitBinary(be spec.BinaryExpr) (any, error) {
+func (intp *Interpreter) VisitBinary(be spec.BinaryExpr) (any, error) {
 	leftValue, leftError := be.Left.Eval(intp)
 	rightValue, rightError := be.Right.Eval(intp)
 	if leftError != nil { return nil, leftError }
@@ -93,27 +93,32 @@ func (intp interpreter) VisitBinary(be spec.BinaryExpr) (any, error) {
 	return nil, runtimeError{message: message, line: be.Opt.Line}
 }
 
-func (intp interpreter) VisitVariable(be spec.VariableExpr) (any, error) {
-	if value, err := intp.env.get(be.Identifier.Lexeme); err == nil {
-		return value, nil
-	} else {
-		return nil, runtimeError{message: err.Error(), line: be.Identifier.Line, cause: err}
+func (intp *Interpreter) VisitVariable(be spec.VariableExpr) (any, error) {
+	lookup, lookupErr := intp.lookUpVar(be.Identifier, be)
+	if lookupErr != nil {
+		return nil, runtimeError{message: lookupErr.Error(), line: be.Identifier.Line, cause: lookupErr}
 	}
+	return lookup, nil
 }
 
-func (intp interpreter) VisitAssignment(ae spec.AssignmentExpr) (any, error) {
+func (intp *Interpreter) VisitAssignment(ae spec.AssignmentExpr) (any, error) {
 	value, evalError := ae.Expr.Eval(intp)
 	if evalError != nil {
 		return nil, runtimeError{message: evalError.(runtimeError).message, line: ae.Identifier.Line, cause: evalError}
 	}
-	assignError := intp.env.assign(ae.Identifier.Lexeme, value)
-	if assignError != nil { 
-		return nil, runtimeError{message: assignError.(runtimeError).message, line: ae.Identifier.Line, cause: assignError}
+	distance, contains := intp.locals[ae.Hash()]
+	if contains {
+		assignErr := intp.env.assignAt(distance, ae.Identifier.Lexeme, value)
+		if assignErr != nil {
+			return nil, runtimeError{message: assignErr.Error(), line: ae.Identifier.Line, cause: assignErr}
+		}
+	} else {
+		intp.globals.assign(ae.Identifier.Lexeme, value)
 	}
 	return value, nil
 }
 
-func (intp interpreter) VisitLogical(le spec.LogicalExpr) (any, error) {
+func (intp *Interpreter) VisitLogical(le spec.LogicalExpr) (any, error) {
 	left, leftError := le.Left.Eval(intp)
 	if leftError != nil { return nil, leftError }
 	// short circuit
@@ -125,7 +130,7 @@ func (intp interpreter) VisitLogical(le spec.LogicalExpr) (any, error) {
 	return le.Right.Eval(intp)
 }
 
-func (intp interpreter) VisitCall(ce spec.CallExpr) (any, error) {
+func (intp *Interpreter) VisitCall(ce spec.CallExpr) (any, error) {
 	callee, calleeError := ce.Callee.Eval(intp)
 	if calleeError != nil { return nil, calleeError }
 	args := []any{}
@@ -144,7 +149,7 @@ func (intp interpreter) VisitCall(ce spec.CallExpr) (any, error) {
 		msg := fmt.Sprintf("expected %v arguments but got %v", function.arity(), len(args))
 		return nil, runtimeError{message: msg, line: ce.Paren.Line}
 	}
-	return function.call(&intp, args)
+	return function.call(intp, args)
 }
 
 // MARK: - Helpers
@@ -158,11 +163,6 @@ type runtimeError struct {
 }
 func (re runtimeError) Error() string {
 	return fmt.Sprintf("%s.\n[line %d]", re.message, re.line)
-	// if re.cause != nil {
-	// 	return fmt.Sprintf("%s.\n[line %d]\n- caused by: %v", re.message, re.line, re.cause)
-	// } else {
-	// 	return fmt.Sprintf("%s.\n[line %d]", re.message, re.line)
-	// }
 }
 
 func isTruthy(value any) bool {

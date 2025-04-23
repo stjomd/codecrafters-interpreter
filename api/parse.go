@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"reflect"
 
 	"github.com/codecrafters-io/interpreter-starter-go/spec"
@@ -437,7 +438,7 @@ func (p *parser) finishCall(callee spec.Expr) (spec.Expr, error) {
 
 func (p *parser) primary() (spec.Expr, error) {
 	if p.match(spec.Identifier) {
-		return spec.VariableExpr{Identifier: p.previous()}, nil
+		return spec.VariableExpr{Identifier: p.previous(), Occurrence: rand.Float64()}, nil
 	} else if p.match(spec.True) {
 		return spec.LiteralExpr{Value: true}, nil
 	} else if p.match(spec.False) {
@@ -465,15 +466,18 @@ func (p *parser) primary() (spec.Expr, error) {
 func forLoopAsStatement(init spec.Stmt, cond spec.Expr, incr spec.Expr, body spec.Stmt) spec.Stmt {
 	// for (init; cond; incr) body
 	// init; while cond { body; incr; }
+	whileLoopBody := []spec.Stmt{body}
+	if incr != nil {
+		incrStmt := spec.ExprStmt{Expr: incr}
+		whileLoopBody = append(whileLoopBody, incrStmt)
+	}
 	whileLoop := spec.WhileStmt{
 		Condition: cond,
 		Body: spec.BlockStmt{
-			Statements: []spec.Stmt{
-				body,
-				spec.ExprStmt{Expr: incr},
-			},
+			Statements: whileLoopBody,
 		},
 	};
+	// { init; while loop }:
 	var statements []spec.Stmt
 	if init != nil {
 		statements = append(statements, init)

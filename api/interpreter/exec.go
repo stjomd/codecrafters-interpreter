@@ -7,7 +7,7 @@ import (
 	"github.com/codecrafters-io/interpreter-starter-go/spec"
 )
 
-func (intp *interpreter) VisitPrint(ps spec.PrintStmt) error {
+func (intp *Interpreter) VisitPrint(ps spec.PrintStmt) error {
 	value, evalError := ps.Expr.Eval(intp)
 	if evalError != nil { return evalError }
 	if value == nil {
@@ -27,7 +27,7 @@ func float64ToString(number float64) string {
 }
 
 
-func (intp *interpreter) VisitExpr(es spec.ExprStmt) error {
+func (intp *Interpreter) VisitExpr(es spec.ExprStmt) error {
 	if es.Expr == nil { return nil }
 	if _, evalError := es.Expr.Eval(intp); evalError != nil {
 		return evalError
@@ -35,14 +35,14 @@ func (intp *interpreter) VisitExpr(es spec.ExprStmt) error {
 	return nil
 }
 
-func (intp *interpreter) VisitDeclare(ds spec.DeclareStmt) error {
+func (intp *Interpreter) VisitDeclare(ds spec.DeclareStmt) error {
 	value, evalError := ds.Expr.Eval(intp)
 	if evalError != nil { return evalError }
 	intp.env.define(ds.Identifier.Lexeme, value)
 	return nil
 }
 
-func (intp *interpreter) VisitBlock(bs spec.BlockStmt) error {
+func (intp *Interpreter) VisitBlock(bs spec.BlockStmt) error {
 	outerEnv := intp.env
 	innerEnv := newEnvWithParent(intp.env)
 	intp.env = &innerEnv
@@ -56,7 +56,7 @@ func (intp *interpreter) VisitBlock(bs spec.BlockStmt) error {
 	return nil
 }
 
-func (intp *interpreter) VisitIf(is spec.IfStmt) error {
+func (intp *Interpreter) VisitIf(is spec.IfStmt) error {
 	condition, conditionError := is.Condition.Eval(intp)
 	if conditionError != nil { return conditionError }
 	if isTruthy(condition) {
@@ -71,7 +71,7 @@ func (intp *interpreter) VisitIf(is spec.IfStmt) error {
 	return nil
 }
 
-func (intp *interpreter) VisitWhile(ws spec.WhileStmt) error {
+func (intp *Interpreter) VisitWhile(ws spec.WhileStmt) error {
 	fulfiled, err := ws.Condition.Eval(intp)
 	if err != nil { return err }
 	for isTruthy(fulfiled) {
@@ -84,7 +84,7 @@ func (intp *interpreter) VisitWhile(ws spec.WhileStmt) error {
 	return nil
 }
 
-func (intp *interpreter) VisitFunc(fs spec.FuncStmt) error {
+func (intp *Interpreter) VisitFunc(fs spec.FuncStmt) error {
 	intp.env.define(
 		fs.Name.Lexeme,
 		Function {
@@ -95,7 +95,7 @@ func (intp *interpreter) VisitFunc(fs spec.FuncStmt) error {
 	return nil
 }
 
-func (intp *interpreter) VisitReturn(rs spec.ReturnStmt) error {
+func (intp *Interpreter) VisitReturn(rs spec.ReturnStmt) error {
 	if rs.Expr == nil {
 		return Return{value: nil}
 	}
