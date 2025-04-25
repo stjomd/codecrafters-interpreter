@@ -1,8 +1,6 @@
 package api
 
 import (
-	"errors"
-
 	intp "github.com/codecrafters-io/interpreter-starter-go/api/interpreter"
 	"github.com/codecrafters-io/interpreter-starter-go/spec"
 )
@@ -10,6 +8,7 @@ import (
 type resolver struct { // implements spec.ExprVisitor[any, error], spec.StmtVisitor[error]
 	intp *intp.Interpreter
 	scopes stack[map[string]bool]
+	hadError bool
 }
 
 type stack[T any] struct {
@@ -45,12 +44,6 @@ func (s *stack[T]) size() int {
 }
 func (s *stack[T]) isEmpty() bool {
 	return s.size() == 0
-}
-
-func newResolver() resolver {
-	intp := intp.NewInterpreter()
-	scopes := stack[map[string]bool]{slice: []map[string]bool{}}
-	return resolver{intp: &intp, scopes: scopes}
 }
 
 // MARK: - Methods
@@ -112,6 +105,11 @@ func (rslv *resolver) define(identifier spec.Token) {
 	scope[identifier.Lexeme] = true
 }
 
+func (rslv *resolver) reportError(token spec.Token, message string) {
+	rslv.hadError = true
+	rslv.intp.ReportError(token, message)
+}
+
 // MARK: - ExprVisitor
 
 func (rslv *resolver) VisitLiteral(le spec.LiteralExpr) (any, error) {
@@ -137,7 +135,7 @@ func (rslv *resolver) VisitBinary(be spec.BinaryExpr) (any, error) {
 func (rslv *resolver) VisitVariable(be spec.VariableExpr) (any, error) {
 	if !rslv.scopes.isEmpty() {
 		if resolution, contains := rslv.scopes.peek()[be.Identifier.Lexeme]; contains && !resolution {
-			return nil, errors.New("can't read local variable in its own initializer")
+			rslv.reportError(be.Identifier, "Can't read local variable in its own initializer")
 		}
 	}
 	rslv.resolveLocal(be, be.Identifier)

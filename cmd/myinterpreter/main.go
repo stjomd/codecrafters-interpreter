@@ -39,7 +39,8 @@ func runCommand(input *string) {
 	handleError(parseError, 65)
 	
 	intp := api.NewInterpreter()
-	api.ResolveWithIntp(&intp, &statements)
+	resolveErr := api.ResolveWithIntp(&intp, &statements)
+	handleError(resolveErr, 65)
 	execError := api.ExecWithIntp(&intp, &statements)
 	handleError(execError, 70)
 }

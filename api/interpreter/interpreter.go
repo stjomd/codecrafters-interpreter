@@ -1,6 +1,11 @@
 package interpreter
 
-import "github.com/codecrafters-io/interpreter-starter-go/spec"
+import (
+	"fmt"
+	"os"
+
+	"github.com/codecrafters-io/interpreter-starter-go/spec"
+)
 
 type Interpreter struct { // implements spec.ExprVisitor[any, error], spec.StmtVisitor[error]
 	env *environment
@@ -23,5 +28,14 @@ func (intp *Interpreter) lookUpVar(name spec.Token, expr spec.Expr) (any, error)
 		return intp.env.getAt(distance, name.Lexeme)
 	} else {
 		return intp.globals.get(name.Lexeme)
+	}
+}
+
+func (intp *Interpreter) ReportError(token spec.Token, message string) {
+	switch token.Type {
+	case spec.EOF:
+		fmt.Fprintf(os.Stderr, "[line %v] Error at end: %v\n", token.Line, message)
+	default:
+		fmt.Fprintf(os.Stderr, "[line %v] Error at '%v': %v\n", token.Line, token.Lexeme, message)
 	}
 }
