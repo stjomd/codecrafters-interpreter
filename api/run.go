@@ -35,9 +35,9 @@ func ExecWithIntp(intp *intp.Interpreter, stmts *[]spec.Stmt) error {
 	return nil
 }
 
-func ResolveWithIntp(intp *intp.Interpreter, stmts *[]spec.Stmt) error {
+func ResolveWithIntp(intpr *intp.Interpreter, stmts *[]spec.Stmt) error {
 	scopes := stack[map[string]bool]{slice: []map[string]bool{}}
-	rslv := resolver{intp: intp, scopes: scopes}
+	rslv := resolver{intp: intpr, scopes: scopes, hadError: false, currentFuncType: intp.None}
 	rslv.resolveStmts(stmts)
 	if rslv.hadError {
 		return errors.New("encountered error(s) in resolver")

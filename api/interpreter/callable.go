@@ -11,6 +11,13 @@ type Callable interface {
 	call(interpreter *Interpreter, args []any) (any, error)
 }
 
+type FunctionType int
+const (
+	None = iota
+	Method
+	Standalone
+)
+
 // MARK: - Lox Functions
 
 type Function struct { // implements Callable

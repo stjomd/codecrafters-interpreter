@@ -9,6 +9,7 @@ type resolver struct { // implements spec.ExprVisitor[any, error], spec.StmtVisi
 	intp *intp.Interpreter
 	scopes stack[map[string]bool]
 	hadError bool
+	currentFuncType intp.FunctionType
 }
 
 type stack[T any] struct {
@@ -62,7 +63,11 @@ func (rslv *resolver) resolveExpr(expr spec.Expr) {
 	expr.Eval(rslv)
 }
 
-func (rslv *resolver) resolveFunction(fs spec.FuncStmt) {
+func (rslv *resolver) resolveFunction(fs spec.FuncStmt, funcType intp.FunctionType) {
+	origFuncType := rslv.currentFuncType
+	rslv.currentFuncType = funcType
+	defer func() { rslv.currentFuncType = origFuncType }()
+
 	rslv.beginScope()
 	for _, param := range fs.Params {
 		rslv.declare(param);
@@ -211,11 +216,14 @@ func (rslv *resolver) VisitWhile(ws spec.WhileStmt) error {
 func (rslv *resolver) VisitFunc(fs spec.FuncStmt) error {
 	rslv.declare(fs.Name);
   rslv.define(fs.Name);
-  rslv.resolveFunction(fs);
+  rslv.resolveFunction(fs, intp.Standalone);
 	return nil
 }
 
 func (rslv *resolver) VisitReturn(rs spec.ReturnStmt) error {
+	if rslv.currentFuncType == intp.None {
+		rslv.reportError(rs.Keyword, "Can't return from top-level code")
+	}
 	if rs.Expr != nil {
 		rslv.resolveExpr(rs.Expr)
 	}
