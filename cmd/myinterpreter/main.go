@@ -40,7 +40,7 @@ func runCommand(input *string) {
 	
 	intp := api.NewInterpreter()
 	resolveErr := api.ResolveWithIntp(&intp, &statements)
-	handleError(resolveErr, 65)
+	handleErrorSilent(resolveErr, 65)
 	execError := api.ExecWithIntp(&intp, &statements)
 	handleError(execError, 70)
 }
@@ -88,6 +88,11 @@ func handleErrors(errors []error, exitCode int) {
 func handleError(err error, exitCode int) {
 	if err == nil { return }
 	fmt.Fprintln(os.Stderr, err)
+	os.Exit(exitCode)
+}
+
+func handleErrorSilent(err error, exitCode int) {
+	if err == nil { return }
 	os.Exit(exitCode)
 }
 

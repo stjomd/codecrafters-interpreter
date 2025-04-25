@@ -77,7 +77,7 @@ func (p *parser) funcDeclaration() (spec.Stmt, error) {
 	if bodyError != nil {
 		return nil, bodyError
 	}
-	return spec.FuncStmt{Name: name, Params: params, Body: body.(spec.BlockStmt)}, nil
+	return spec.FuncStmt{Name: name, Params: params, Body: body.(spec.BlockStmt).Statements}, nil
 }
 
 func (p *parser) varDeclaration() (spec.Stmt, error) {

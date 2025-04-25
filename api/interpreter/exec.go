@@ -43,12 +43,16 @@ func (intp *Interpreter) VisitDeclare(ds spec.DeclareStmt) error {
 }
 
 func (intp *Interpreter) VisitBlock(bs spec.BlockStmt) error {
-	outerEnv := intp.env
-	innerEnv := newEnvWithParent(intp.env)
-	intp.env = &innerEnv
-	defer func() { intp.env = outerEnv }()
+	env := newEnvWithParent(intp.env)
+	return intp.ExecBlock(&bs.Statements, &env)
+}
 
-	for _, stmt := range bs.Statements {
+func (intp *Interpreter) ExecBlock(stmts *[]spec.Stmt, env *environment) error {
+	origEnv := intp.env
+	intp.env = env
+	defer func() { intp.env = origEnv }()
+
+	for _, stmt := range *stmts {
 		if err := stmt.Exec(intp); err != nil {
 			return err;
 		}

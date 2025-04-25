@@ -69,7 +69,7 @@ func (ws WhileStmt) Exec(executor StmtVisitor[error]) error {
 type FuncStmt struct {
 	Name Token
 	Params []Token
-	Body BlockStmt
+	Body []Stmt
 }
 func (fs FuncStmt) Exec(executor StmtVisitor[error]) error {
 	return executor.VisitFunc(fs)

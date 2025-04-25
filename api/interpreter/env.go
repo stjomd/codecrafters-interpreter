@@ -51,14 +51,6 @@ func (env *environment) getAt(distance int, name string) (any, error) {
 	return env.ancestor(distance).get(name)
 }
 
-func (env *environment) getGlobalsEnv() *environment {
-	current := env
-	for current.parent != nil {
-		current = current.parent
-	}
-	return current
-}
-
 func (env *environment) ancestor(distance int) *environment {
 	current := env
 	for range distance {

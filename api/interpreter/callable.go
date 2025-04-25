@@ -30,7 +30,7 @@ func (f Function) call(interpreter *Interpreter, args []any) (any, error) {
 		interpreter.env.define(param.Lexeme, args[i])
 	}
 
-	execError := f.declaration.Body.Exec(interpreter);
+	execError := interpreter.ExecBlock(&f.declaration.Body, &subenv)
 	if returnValue, ok := execError.(Return); ok {
 		return returnValue.value, nil
 	} else if execError != nil {

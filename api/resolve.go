@@ -68,7 +68,7 @@ func (rslv *resolver) resolveFunction(fs spec.FuncStmt) {
 		rslv.declare(param);
     rslv.define(param);
 	}
-	rslv.resolveStmt(fs.Body);
+	rslv.resolveStmts(&fs.Body);
 	rslv.endScope()
 }
 
@@ -94,6 +94,9 @@ func (rslv *resolver) declare(identifier spec.Token) {
 		return
 	}
 	scope := rslv.scopes.peek()
+	if _, contains := scope[identifier.Lexeme]; contains {
+		rslv.reportError(identifier, "Already a variable with this name in this scope.")
+	}
 	scope[identifier.Lexeme] = false
 }
 
