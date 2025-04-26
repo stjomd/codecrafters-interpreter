@@ -308,6 +308,9 @@ func (p *parser) assignment() (spec.Expr, error) {
 		if areTypesEqual(expr, spec.VariableExpr{}) {
 			identifier := expr.(spec.VariableExpr).Identifier
 			return spec.AssignmentExpr{Identifier: identifier, Expr: value}, nil
+		} else if areTypesEqual(expr, spec.GetExpr{}) {
+			get := expr.(spec.GetExpr)
+			return spec.SetExpr{Object: get.Object, Name: get.Name, Value: value}, nil
 		}
 	}
 	return expr, nil
@@ -433,6 +436,12 @@ func (p *parser) call() (spec.Expr, error) {
 				return nil, finishedCallError
 			}
 			expr = finishedCall
+		} else if p.match(spec.Dot) {
+			name, nameError := p.consume(spec.Identifier, "Expect property name after '.'")
+			if nameError != nil {
+				return nil, nameError
+			}
+			expr = spec.GetExpr{Object: expr, Name: name} 
 		} else {
 			break
 		}

@@ -170,6 +170,17 @@ func (rslv *resolver) VisitCall(ce spec.CallExpr) (any, error) {
 	return nil, nil
 }
 
+func (rslv *resolver) VisitGet(ge spec.GetExpr) (any, error) {
+	rslv.resolveExpr(ge.Object)
+	return nil, nil
+}
+
+func (rslv *resolver) VisitSet(se spec.SetExpr) (any, error) {
+	rslv.resolveExpr(se.Object)
+	rslv.resolveExpr(se.Value)
+	return nil, nil
+}
+
 // MARK: - StmtVisitor
 
 func (rslv *resolver) VisitPrint(ps spec.PrintStmt) error {

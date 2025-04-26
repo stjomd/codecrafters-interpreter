@@ -1,5 +1,9 @@
 package interpreter
 
+import (
+	"fmt"
+)
+
 type Class struct { // implements Callable
 	Name string
 }
@@ -9,9 +13,21 @@ func (class Class) String() string {
 
 type ClassInstance struct {
 	Class *Class
+	Fields map[string]any
 }
-func (instance ClassInstance) String() string {
-	return instance.Class.Name + " instance"
+func (inst ClassInstance) String() string {
+	return inst.Class.Name + " instance"
+}
+func (inst ClassInstance) get(name string) (any, error) {
+	if value, contains := inst.Fields[name]; contains {
+		return value, nil
+	} else {
+		return nil, fmt.Errorf("undefined property %v", name)
+	}
+}
+func (inst ClassInstance) set(name string, value any) error {
+	inst.Fields[name] = value
+	return nil
 }
 
 // MARK: - Class Callable
@@ -19,6 +35,6 @@ func (class Class) arity() int {
 	return 0
 }
 func (class Class) call(intp *Interpreter, args []any) (any, error) {
-	instance := ClassInstance{Class: &class}
-	return instance, nil
+	inst := ClassInstance{Class: &class, Fields: make(map[string]any)}
+	return inst, nil
 }

@@ -25,6 +25,8 @@ type ExprVisitor[R any, E error] interface {
 	VisitLogical(logicalExpr LogicalExpr) (R, E)
 	VisitUnary(unaryExpr UnaryExpr) (R, E)
 	VisitVariable(variableExpr VariableExpr) (R, E)
+	VisitGet(getExpr GetExpr) (R, E)
+	VisitSet(setExpr SetExpr) (R, E)
 }
 
 type LiteralExpr struct {
@@ -179,6 +181,42 @@ func (ce CallExpr) Hash() uint64 {
 }
 func (ce CallExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
 	return evaluator.VisitCall(ce)
+}
+
+type GetExpr struct {
+	Object Expr
+	Name Token
+}
+func (ge GetExpr) String() string {
+	return fmt.Sprintf("%v.%v", ge.Object, ge.Name)
+}
+func (ge GetExpr) Hash() uint64 {
+	hash := fnv.New64()
+	hash.Write(bytify(ge.Object.Hash()))
+	hash.Write(bytify(ge.Name.Hash()))
+	return hash.Sum64()
+}
+func (ge GetExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
+	return evaluator.VisitGet(ge)
+}
+
+type SetExpr struct {
+	Object Expr
+	Name Token
+	Value Expr
+}
+func (se SetExpr) String() string {
+	return fmt.Sprintf("%v.%v = %v", se.Object, se.Name, se.Value)
+}
+func (se SetExpr) Hash() uint64 {
+	hash := fnv.New64()
+	hash.Write(bytify(se.Object.Hash()))
+	hash.Write(bytify(se.Name.Hash()))
+	hash.Write(bytify(se.Value.Hash()))
+	return hash.Sum64()
+}
+func (se SetExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
+	return evaluator.VisitSet(se)
 }
 
 // MARK: - Helpers

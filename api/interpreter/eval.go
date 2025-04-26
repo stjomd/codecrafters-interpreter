@@ -152,6 +152,38 @@ func (intp *Interpreter) VisitCall(ce spec.CallExpr) (any, error) {
 	return function.call(intp, args)
 }
 
+func (intp *Interpreter) VisitGet(ge spec.GetExpr) (any, error) {
+	object, objectError := ge.Object.Eval(intp)
+	if objectError != nil {
+		return nil, objectError
+	}
+	if instance, ok := object.(ClassInstance); ok {
+		value, valueError := instance.get(ge.Name.Lexeme)
+		if valueError != nil {
+			return nil, runtimeError{message: valueError.Error(), line: ge.Name.Line, cause: valueError}
+		}
+		return value, nil
+	}
+	return nil, runtimeError{message: "Only instances have properties", line: ge.Name.Line}
+}
+
+func (intp *Interpreter) VisitSet(se spec.SetExpr) (any, error) {
+	object, objectError := se.Object.Eval(intp)
+	if objectError != nil {
+		return nil, objectError
+	}
+	inst, castOk := object.(ClassInstance)
+	if !castOk {
+		return nil, runtimeError{message: "Only instances have fields", line: se.Name.Line}
+	}
+	value, valueError := se.Value.Eval(intp)
+	if valueError != nil {
+		return nil, valueError
+	}
+	inst.set(se.Name.Lexeme, value)
+	return value, nil
+}
+
 // MARK: - Helpers
 
 const operandsMustBeNumbers = "Operands must be numbers"
