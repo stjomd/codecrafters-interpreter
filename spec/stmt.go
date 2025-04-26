@@ -15,6 +15,7 @@ type StmtVisitor[R any] interface {
 	VisitPrint(printStmt PrintStmt) R
 	VisitWhile(whileStmt WhileStmt) R
 	VisitReturn(returnStmt ReturnStmt) R
+	VisitClass(classStmt ClassStmt) R
 }
 
 type PrintStmt struct {
@@ -81,4 +82,12 @@ type ReturnStmt struct {
 }
 func (rs ReturnStmt) Exec(executor StmtVisitor[error]) error {
 	return executor.VisitReturn(rs)
+}
+
+type ClassStmt struct {
+	Name Token
+	Methods []FuncStmt
+}
+func (cs ClassStmt) Exec(executor StmtVisitor[error]) error {
+	return executor.VisitClass(cs)
 }

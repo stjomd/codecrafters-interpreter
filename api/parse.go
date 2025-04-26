@@ -37,6 +37,9 @@ type parser struct {
 // MARK: Statements
 
 func (p *parser) declaration() (spec.Stmt, error) {
+	if (p.match(spec.Class)) {
+		return p.classDesclaration()
+	}
 	if (p.match(spec.Fun)) {
 		return p.funcDeclaration()
 	}
@@ -44,6 +47,28 @@ func (p *parser) declaration() (spec.Stmt, error) {
 		return p.varDeclaration() 
 	}
 	return p.statement()
+}
+
+func (p *parser) classDesclaration() (spec.Stmt, error) {
+	name, nameError := p.consume(spec.Identifier, "Expect class name")
+	if nameError != nil {
+		return nil, nameError
+	}
+	if _, braceError := p.consume(spec.LeftBrace, "Expect '{' after function name"); braceError != nil {
+		return nil, braceError
+	}
+	methods := []spec.FuncStmt{}
+	for !p.check(spec.RightBrace) && !p.check(spec.EOF) {
+		method, methodError := p.funcDeclaration()
+		if methodError != nil {
+			return nil, methodError
+		}
+		methods = append(methods, method.(spec.FuncStmt))
+	}
+	if _, braceError := p.consume(spec.RightBrace, "Expect '}' after function name"); braceError != nil {
+		return nil, braceError
+	}
+	return spec.ClassStmt{Name: name, Methods: methods}, nil
 }
 
 func (p *parser) funcDeclaration() (spec.Stmt, error) {

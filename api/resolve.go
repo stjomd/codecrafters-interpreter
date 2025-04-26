@@ -229,3 +229,9 @@ func (rslv *resolver) VisitReturn(rs spec.ReturnStmt) error {
 	}
 	return nil
 }
+
+func (rslv *resolver) VisitClass(cs spec.ClassStmt) error {
+	rslv.declare(cs.Name)
+	rslv.define(cs.Name)
+	return nil
+}

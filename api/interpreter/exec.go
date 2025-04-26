@@ -109,3 +109,10 @@ func (intp *Interpreter) VisitReturn(rs spec.ReturnStmt) error {
 	}
 	return Return{value: value}
 }
+
+func (intp *Interpreter) VisitClass(cs spec.ClassStmt) error {
+	intp.env.define(cs.Name.Lexeme, nil)
+	class := Class{Name: cs.Name.Lexeme}
+	intp.env.assign(cs.Name.Lexeme, class)
+	return nil
+}
