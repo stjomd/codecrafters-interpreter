@@ -6,6 +6,7 @@ import (
 
 type Class struct { // implements Callable
 	Name string
+	Methods map[string]Function
 }
 func (class Class) String() string {
 	return class.Name
@@ -21,6 +22,8 @@ func (inst ClassInstance) String() string {
 func (inst ClassInstance) get(name string) (any, error) {
 	if value, contains := inst.Fields[name]; contains {
 		return value, nil
+	} else if method, contains := inst.findMethod(name); contains {
+		return method, nil
 	} else {
 		return nil, fmt.Errorf("undefined property %v", name)
 	}
@@ -28,6 +31,11 @@ func (inst ClassInstance) get(name string) (any, error) {
 func (inst ClassInstance) set(name string, value any) error {
 	inst.Fields[name] = value
 	return nil
+}
+
+func (inst ClassInstance) findMethod(name string) (Function, bool) {
+	function, contains := inst.Class.Methods[name]
+	return function, contains // Go...
 }
 
 // MARK: - Class Callable

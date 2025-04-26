@@ -244,5 +244,8 @@ func (rslv *resolver) VisitReturn(rs spec.ReturnStmt) error {
 func (rslv *resolver) VisitClass(cs spec.ClassStmt) error {
 	rslv.declare(cs.Name)
 	rslv.define(cs.Name)
+	for _, method := range cs.Methods {
+		rslv.resolveFunction(method, intp.Method)
+	}
 	return nil
 }

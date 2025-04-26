@@ -112,7 +112,12 @@ func (intp *Interpreter) VisitReturn(rs spec.ReturnStmt) error {
 
 func (intp *Interpreter) VisitClass(cs spec.ClassStmt) error {
 	intp.env.define(cs.Name.Lexeme, nil)
-	class := Class{Name: cs.Name.Lexeme}
+	methods := make(map[string]Function)
+	for _, method := range cs.Methods {
+		methodFunc := Function{declaration: method, closure: intp.env}
+		methods[method.Name.Lexeme] = methodFunc
+	}
+	class := Class{Name: cs.Name.Lexeme, Methods: methods}
 	intp.env.assign(cs.Name.Lexeme, class)
 	return nil
 }
