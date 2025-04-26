@@ -23,7 +23,7 @@ func (inst ClassInstance) get(name string) (any, error) {
 	if value, contains := inst.Fields[name]; contains {
 		return value, nil
 	} else if method, contains := inst.findMethod(name); contains {
-		return method, nil
+		return method.bind(inst), nil
 	} else {
 		return nil, fmt.Errorf("undefined property %v", name)
 	}
@@ -32,13 +32,19 @@ func (inst ClassInstance) set(name string, value any) error {
 	inst.Fields[name] = value
 	return nil
 }
-
 func (inst ClassInstance) findMethod(name string) (Function, bool) {
 	function, contains := inst.Class.Methods[name]
 	return function, contains // Go...
 }
 
+type ClassType int
+const (
+	CtNone = iota
+	CtClass
+)
+
 // MARK: - Class Callable
+
 func (class Class) arity() int {
 	return 0
 }

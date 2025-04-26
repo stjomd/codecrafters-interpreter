@@ -27,6 +27,7 @@ type ExprVisitor[R any, E error] interface {
 	VisitVariable(variableExpr VariableExpr) (R, E)
 	VisitGet(getExpr GetExpr) (R, E)
 	VisitSet(setExpr SetExpr) (R, E)
+	VisitThis(thisExpr ThisExpr) (R, E)
 }
 
 type LiteralExpr struct {
@@ -44,6 +45,7 @@ func (le LiteralExpr) String() string {
 func (le LiteralExpr) Hash() uint64 {
 	hash := fnv.New64()
 	hash.Write([]byte(le.String()))
+	hash.Write([]byte("LiteralExpr"))
 	return hash.Sum64()
 }
 func (le LiteralExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
@@ -59,6 +61,7 @@ func (ge GroupingExpr) String() string {
 func (ge GroupingExpr) Hash() uint64 {
 	hash := fnv.New64()
 	hash.Write(bytify(ge.Expr.Hash()))
+	hash.Write([]byte("GroupingExpr"))
 	return hash.Sum64()
 }
 func (ge GroupingExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
@@ -217,6 +220,22 @@ func (se SetExpr) Hash() uint64 {
 }
 func (se SetExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
 	return evaluator.VisitSet(se)
+}
+
+type ThisExpr struct {
+	Keyword Token
+}
+func (te ThisExpr) String() string {
+	return "this"
+}
+func (te ThisExpr) Hash() uint64 {
+	hash := fnv.New64()
+	hash.Write(bytify(te.Keyword.Hash()))
+	hash.Write([]byte("ThisExpr"))
+	return hash.Sum64()
+}
+func (te ThisExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
+	return evaluator.VisitThis(te)
 }
 
 // MARK: - Helpers

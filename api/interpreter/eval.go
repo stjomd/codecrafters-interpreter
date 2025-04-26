@@ -184,6 +184,10 @@ func (intp *Interpreter) VisitSet(se spec.SetExpr) (any, error) {
 	return value, nil
 }
 
+func (intp *Interpreter) VisitThis(te spec.ThisExpr) (any, error) {
+	return intp.lookUpVar(te.Keyword, te)
+}
+
 // MARK: - Helpers
 
 const operandsMustBeNumbers = "Operands must be numbers"

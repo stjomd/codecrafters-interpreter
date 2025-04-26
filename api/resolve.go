@@ -10,6 +10,7 @@ type resolver struct { // implements spec.ExprVisitor[any, error], spec.StmtVisi
 	scopes stack[map[string]bool]
 	hadError bool
 	currentFuncType intp.FunctionType
+	currentClassType intp.ClassType
 }
 
 type stack[T any] struct {
@@ -181,6 +182,14 @@ func (rslv *resolver) VisitSet(se spec.SetExpr) (any, error) {
 	return nil, nil
 }
 
+func (rslv *resolver) VisitThis(te spec.ThisExpr) (any, error) {
+	if rslv.currentClassType == intp.CtNone {
+		rslv.reportError(te.Keyword, "Can't use 'this' outside of a class.")
+	}
+	rslv.resolveLocal(te, te.Keyword)
+	return nil, nil
+}
+
 // MARK: - StmtVisitor
 
 func (rslv *resolver) VisitPrint(ps spec.PrintStmt) error {
@@ -227,12 +236,12 @@ func (rslv *resolver) VisitWhile(ws spec.WhileStmt) error {
 func (rslv *resolver) VisitFunc(fs spec.FuncStmt) error {
 	rslv.declare(fs.Name);
   rslv.define(fs.Name);
-  rslv.resolveFunction(fs, intp.Standalone);
+  rslv.resolveFunction(fs, intp.FtStandalone);
 	return nil
 }
 
 func (rslv *resolver) VisitReturn(rs spec.ReturnStmt) error {
-	if rslv.currentFuncType == intp.None {
+	if rslv.currentFuncType == intp.FtNone {
 		rslv.reportError(rs.Keyword, "Can't return from top-level code")
 	}
 	if rs.Expr != nil {
@@ -242,10 +251,18 @@ func (rslv *resolver) VisitReturn(rs spec.ReturnStmt) error {
 }
 
 func (rslv *resolver) VisitClass(cs spec.ClassStmt) error {
+	origClassType := rslv.currentFuncType
+	rslv.currentClassType = intp.CtClass
+	defer func() { rslv.currentFuncType = origClassType }()
+
 	rslv.declare(cs.Name)
 	rslv.define(cs.Name)
+
+	rslv.beginScope()
+	rslv.scopes.peek()["this"] = true
 	for _, method := range cs.Methods {
-		rslv.resolveFunction(method, intp.Method)
+		rslv.resolveFunction(method, intp.FtMethod)
 	}
+	rslv.endScope()
 	return nil
 }

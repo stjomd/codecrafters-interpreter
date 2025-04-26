@@ -490,6 +490,8 @@ func (p *parser) primary() (spec.Expr, error) {
 			return nil, err
 		}
 		return spec.GroupingExpr{Expr: expr}, nil
+	} else if p.match(spec.This) {
+		return spec.ThisExpr{Keyword: p.previous()}, nil
 	}
 	message := fmt.Sprintf("[line %d] Error at '%v': Expect expression.", p.peek().Line, p.peek().Lexeme)
 	return nil, errors.New(message)

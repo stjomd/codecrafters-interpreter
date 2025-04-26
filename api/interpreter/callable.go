@@ -13,9 +13,9 @@ type Callable interface {
 
 type FunctionType int
 const (
-	None = iota
-	Method
-	Standalone
+	FtNone = iota
+	FtMethod
+	FtStandalone
 )
 
 // MARK: - Lox Functions
@@ -45,6 +45,11 @@ func (f Function) call(interpreter *Interpreter, args []any) (any, error) {
 	}
 
 	return nil, nil
+}
+func (f Function) bind(inst ClassInstance) Function {
+	closure := newEnvWithParent(f.closure)
+	closure.define("this", inst)
+	return Function{declaration: f.declaration, closure: &closure}
 }
 func (f Function) String() string {
 	return fmt.Sprintf("<fn %v>", f.declaration.Name.Lexeme)
