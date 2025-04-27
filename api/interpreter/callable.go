@@ -15,6 +15,7 @@ type FunctionType int
 const (
 	FtNone = iota
 	FtMethod
+	FtInitializer
 	FtStandalone
 )
 
@@ -40,6 +41,9 @@ func (f Function) call(interpreter *Interpreter, args []any) (any, error) {
 
 	execError := interpreter.ExecBlock(&f.declaration.Body, &subenv)
 	if returnValue, ok := execError.(Return); ok {
+		if f.isInit {
+			return f.closure.getAt(0, "this")
+		}
 		return returnValue.value, nil
 	} else if execError != nil {
 		return nil, execError

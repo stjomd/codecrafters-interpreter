@@ -245,6 +245,9 @@ func (rslv *resolver) VisitReturn(rs spec.ReturnStmt) error {
 		rslv.reportError(rs.Keyword, "Can't return from top-level code")
 	}
 	if rs.Expr != nil {
+		if rslv.currentFuncType == intp.FtInitializer {
+			rslv.reportError(rs.Keyword, "Can't return a value from an initializer")
+		}
 		rslv.resolveExpr(rs.Expr)
 	}
 	return nil
@@ -261,7 +264,11 @@ func (rslv *resolver) VisitClass(cs spec.ClassStmt) error {
 	rslv.beginScope()
 	rslv.scopes.peek()["this"] = true
 	for _, method := range cs.Methods {
-		rslv.resolveFunction(method, intp.FtMethod)
+		methodType := intp.FtMethod
+		if method.Name.Lexeme == "init" {
+			methodType = intp.FtInitializer
+		}
+		rslv.resolveFunction(method, intp.FunctionType(methodType))
 	}
 	rslv.endScope()
 	return nil
