@@ -23,6 +23,7 @@ const (
 type Function struct { // implements Callable
 	declaration spec.FuncStmt
 	closure *environment
+	isInit bool
 }
 func (f Function) arity() int {
 	return len(f.declaration.Params)
@@ -44,12 +45,15 @@ func (f Function) call(interpreter *Interpreter, args []any) (any, error) {
 		return nil, execError
 	}
 
+	if f.isInit {
+		return f.closure.getAt(0, "this")
+	}
 	return nil, nil
 }
 func (f Function) bind(inst ClassInstance) Function {
 	closure := newEnvWithParent(f.closure)
 	closure.define("this", inst)
-	return Function{declaration: f.declaration, closure: &closure}
+	return Function{declaration: f.declaration, closure: &closure, isInit: f.isInit}
 }
 func (f Function) String() string {
 	return fmt.Sprintf("<fn %v>", f.declaration.Name.Lexeme)

@@ -94,6 +94,7 @@ func (intp *Interpreter) VisitFunc(fs spec.FuncStmt) error {
 		Function {
 			declaration: fs,
 			closure: intp.env,
+			isInit: false,
 		},
 	)
 	return nil
@@ -114,7 +115,7 @@ func (intp *Interpreter) VisitClass(cs spec.ClassStmt) error {
 	intp.env.define(cs.Name.Lexeme, nil)
 	methods := make(map[string]Function)
 	for _, method := range cs.Methods {
-		methodFunc := Function{declaration: method, closure: intp.env}
+		methodFunc := Function{declaration: method, closure: intp.env, isInit: method.Name.Lexeme == "init"}
 		methods[method.Name.Lexeme] = methodFunc
 	}
 	class := Class{Name: cs.Name.Lexeme, Methods: methods}
