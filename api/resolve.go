@@ -190,6 +190,12 @@ func (rslv *resolver) VisitThis(te spec.ThisExpr) (any, error) {
 	return nil, nil
 }
 
+func (rslv *resolver) VisitSuper(se spec.SuperExpr) (any, error) {
+	rslv.resolveLocal(se, se.Keyword)
+	return nil, nil
+}
+
+
 // MARK: - StmtVisitor
 
 func (rslv *resolver) VisitPrint(ps spec.PrintStmt) error {
@@ -267,6 +273,8 @@ func (rslv *resolver) VisitClass(cs spec.ClassStmt) error {
 		} else {
 			rslv.reportError(cs.Superclass.Identifier, "A class can't inherit from itself")
 		}
+		rslv.beginScope()
+		rslv.scopes.peek()["super"] = true
 	}
 
 	rslv.beginScope()
@@ -277,6 +285,10 @@ func (rslv *resolver) VisitClass(cs spec.ClassStmt) error {
 			methodType = intp.FtInitializer
 		}
 		rslv.resolveFunction(method, intp.FunctionType(methodType))
+	}
+
+	if cs.Superclass != nil {
+		rslv.endScope()
 	}
 	rslv.endScope()
 	return nil

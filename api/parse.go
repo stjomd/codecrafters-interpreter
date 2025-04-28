@@ -504,6 +504,16 @@ func (p *parser) primary() (spec.Expr, error) {
 		return spec.GroupingExpr{Expr: expr}, nil
 	} else if p.match(spec.This) {
 		return spec.ThisExpr{Keyword: p.previous()}, nil
+	} else if p.match(spec.Super) {
+		keyword := p.previous()
+		if _, err := p.consume(spec.Dot, "Expect '.' after 'super'"); err != nil {
+			return nil, err
+		}
+		method, methodErr := p.consume(spec.Identifier, "Expect superclass method name")
+		if methodErr != nil {
+			return nil, methodErr
+		}
+		return spec.SuperExpr{Keyword: keyword, Method: method}, nil
 	}
 	message := fmt.Sprintf("[line %d] Error at '%v': Expect expression.", p.peek().Line, p.peek().Lexeme)
 	return nil, errors.New(message)

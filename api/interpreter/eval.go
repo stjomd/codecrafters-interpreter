@@ -188,6 +188,30 @@ func (intp *Interpreter) VisitThis(te spec.ThisExpr) (any, error) {
 	return intp.lookUpVar(te.Keyword, te)
 }
 
+func (intp *Interpreter) VisitSuper(se spec.SuperExpr) (any, error) {
+	distance := intp.locals[se.Hash()]
+	superclass, scErr := intp.env.getAt(distance, "super")
+	if scErr != nil {
+		return nil, scErr
+	}
+	instance, iErr := intp.env.getAt(distance - 1, "this")
+	if iErr != nil {
+		return nil, iErr
+	}
+
+	superclassClass, scOk := superclass.(Class)
+	instanceInstance, iOk := instance.(ClassInstance)
+	if !scOk || !iOk {
+		return nil, nil // TODO
+	}
+
+	method, ok := superclassClass.findMethod(se.Method.Lexeme)
+	if !ok {
+		return nil, nil // TODO
+	}
+	return method.bind(instanceInstance), nil
+}
+
 // MARK: - Helpers
 
 const operandsMustBeNumbers = "Operands must be numbers"

@@ -127,6 +127,13 @@ func (intp *Interpreter) VisitClass(cs spec.ClassStmt) error {
 
 	intp.env.define(cs.Name.Lexeme, nil)
 
+	if cs.Superclass != nil {
+		env := newEnvWithParent(intp.env)
+		env.define("super", *superclass)
+		intp.env = &env
+		defer func() { intp.env = env.parent }()
+	}
+
 	methods := make(map[string]Function)
 	for _, method := range cs.Methods {
 		methodFunc := Function{declaration: method, closure: intp.env, isInit: method.Name.Lexeme == "init"}

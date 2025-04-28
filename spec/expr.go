@@ -28,6 +28,7 @@ type ExprVisitor[R any, E error] interface {
 	VisitGet(getExpr GetExpr) (R, E)
 	VisitSet(setExpr SetExpr) (R, E)
 	VisitThis(thisExpr ThisExpr) (R, E)
+	VisitSuper(superExpr SuperExpr) (R, E)
 }
 
 type LiteralExpr struct {
@@ -236,6 +237,23 @@ func (te ThisExpr) Hash() uint64 {
 }
 func (te ThisExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
 	return evaluator.VisitThis(te)
+}
+
+type SuperExpr struct {
+	Keyword Token
+	Method Token
+}
+func (se SuperExpr) String() string {
+	return "super." + se.Method.Lexeme
+}
+func (se SuperExpr) Hash() uint64 {
+	hash := fnv.New64()
+	hash.Write(bytify(se.Keyword.Hash()))
+	hash.Write(bytify(se.Method.Hash()))
+	return hash.Sum64()
+}
+func (se SuperExpr) Eval(evaluator ExprVisitor[any, error]) (any, error) {
+	return evaluator.VisitSuper(se)
 }
 
 // MARK: - Helpers
