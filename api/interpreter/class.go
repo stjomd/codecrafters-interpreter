@@ -43,8 +43,9 @@ func (inst ClassInstance) set(name string, value any) error {
 
 type ClassType int
 const (
-	CtNone = iota
+	CtNone ClassType = iota
 	CtClass
+	CtSubclass
 )
 
 // MARK: - Class Callable

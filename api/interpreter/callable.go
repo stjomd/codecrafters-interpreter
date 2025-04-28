@@ -13,7 +13,7 @@ type Callable interface {
 
 type FunctionType int
 const (
-	FtNone = iota
+	FtNone FunctionType = iota
 	FtMethod
 	FtInitializer
 	FtStandalone

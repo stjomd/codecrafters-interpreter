@@ -191,6 +191,12 @@ func (rslv *resolver) VisitThis(te spec.ThisExpr) (any, error) {
 }
 
 func (rslv *resolver) VisitSuper(se spec.SuperExpr) (any, error) {
+	switch rslv.currentClassType {
+	case intp.CtNone:
+		rslv.reportError(se.Keyword, "Can't use 'super' outside of a class")
+	case intp.CtClass:
+		rslv.reportError(se.Keyword, "Can't use 'super' in a class with no superclass")
+	}
 	rslv.resolveLocal(se, se.Keyword)
 	return nil, nil
 }
@@ -260,14 +266,15 @@ func (rslv *resolver) VisitReturn(rs spec.ReturnStmt) error {
 }
 
 func (rslv *resolver) VisitClass(cs spec.ClassStmt) error {
-	origClassType := rslv.currentFuncType
+	origClassType := rslv.currentClassType
 	rslv.currentClassType = intp.CtClass
-	defer func() { rslv.currentFuncType = origClassType }()
+	defer func() { rslv.currentClassType = origClassType }()
 
 	rslv.declare(cs.Name)
 	rslv.define(cs.Name)
 
 	if cs.Superclass != nil {
+		rslv.currentClassType = intp.CtSubclass
 		if cs.Superclass.Identifier.Lexeme != cs.Name.Lexeme {
 			rslv.resolveExpr(cs.Superclass)
 		} else {
