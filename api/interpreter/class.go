@@ -7,6 +7,7 @@ import (
 type Class struct { // implements Callable
 	Name string
 	Methods map[string]Function
+	Superclass *Class
 }
 func (class Class) String() string {
 	return class.Name

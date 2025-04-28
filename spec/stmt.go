@@ -87,6 +87,7 @@ func (rs ReturnStmt) Exec(executor StmtVisitor[error]) error {
 type ClassStmt struct {
 	Name Token
 	Methods []FuncStmt
+	Superclass *VariableExpr
 }
 func (cs ClassStmt) Exec(executor StmtVisitor[error]) error {
 	return executor.VisitClass(cs)

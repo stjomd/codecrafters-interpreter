@@ -261,6 +261,14 @@ func (rslv *resolver) VisitClass(cs spec.ClassStmt) error {
 	rslv.declare(cs.Name)
 	rslv.define(cs.Name)
 
+	if cs.Superclass != nil {
+		if cs.Superclass.Identifier.Lexeme != cs.Name.Lexeme {
+			rslv.resolveExpr(cs.Superclass)
+		} else {
+			rslv.reportError(cs.Superclass.Identifier, "A class can't inherit from itself")
+		}
+	}
+
 	rslv.beginScope()
 	rslv.scopes.peek()["this"] = true
 	for _, method := range cs.Methods {

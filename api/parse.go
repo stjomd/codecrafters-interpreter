@@ -54,9 +54,20 @@ func (p *parser) classDesclaration() (spec.Stmt, error) {
 	if nameError != nil {
 		return nil, nameError
 	}
+
+	var superclass *spec.VariableExpr
+	if p.match(spec.Less) {
+		superclassIdent, superclassError := p.consume(spec.Identifier, "Expect superclass name")
+		if superclassError != nil {
+			return nil, superclassError
+		}
+		superclass = &spec.VariableExpr{Identifier: superclassIdent, Occurrence: rand.Float64()}
+	}
+
 	if _, braceError := p.consume(spec.LeftBrace, "Expect '{' after function name"); braceError != nil {
 		return nil, braceError
 	}
+
 	methods := []spec.FuncStmt{}
 	for !p.check(spec.RightBrace) && !p.check(spec.EOF) {
 		method, methodError := p.funcDeclaration()
@@ -65,10 +76,11 @@ func (p *parser) classDesclaration() (spec.Stmt, error) {
 		}
 		methods = append(methods, method.(spec.FuncStmt))
 	}
+
 	if _, braceError := p.consume(spec.RightBrace, "Expect '}' after function name"); braceError != nil {
 		return nil, braceError
 	}
-	return spec.ClassStmt{Name: name, Methods: methods}, nil
+	return spec.ClassStmt{Name: name, Methods: methods, Superclass: superclass}, nil
 }
 
 func (p *parser) funcDeclaration() (spec.Stmt, error) {

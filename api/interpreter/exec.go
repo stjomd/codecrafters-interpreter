@@ -112,13 +112,28 @@ func (intp *Interpreter) VisitReturn(rs spec.ReturnStmt) error {
 }
 
 func (intp *Interpreter) VisitClass(cs spec.ClassStmt) error {
+	var superclass *Class
+	if cs.Superclass != nil {
+		sclass, sclassError := cs.Superclass.Eval(intp)
+		if sclassError != nil {
+			return sclassError
+		}
+		if srclass, ok := sclass.(Class); ok {
+			superclass = &srclass
+		} else {
+			return runtimeError{message: "Superclass must be a class", line: cs.Superclass.Identifier.Line}
+		}
+	}
+
 	intp.env.define(cs.Name.Lexeme, nil)
+
 	methods := make(map[string]Function)
 	for _, method := range cs.Methods {
 		methodFunc := Function{declaration: method, closure: intp.env, isInit: method.Name.Lexeme == "init"}
 		methods[method.Name.Lexeme] = methodFunc
 	}
-	class := Class{Name: cs.Name.Lexeme, Methods: methods}
+
+	class := Class{Name: cs.Name.Lexeme, Methods: methods, Superclass: superclass}
 	intp.env.assign(cs.Name.Lexeme, class)
 	return nil
 }
