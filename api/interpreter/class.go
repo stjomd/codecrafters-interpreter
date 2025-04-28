@@ -14,7 +14,10 @@ func (class Class) String() string {
 }
 func (class Class) findMethod(name string) (Function, bool) {
 	function, contains := class.Methods[name]
-	return function, contains // Go...
+	if !contains && class.Superclass != nil {
+		return class.Superclass.findMethod(name)
+	}
+	return function, contains
 }
 
 type ClassInstance struct {
